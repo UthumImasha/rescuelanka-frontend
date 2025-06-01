@@ -250,26 +250,31 @@ const GovernmentHelpCentreDashboard = () => {
         }
     };
 
-    const renderMetricCard = (title, value, unit, icon: Icon, color, trend) => (
-        <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-600">{title}</p>
-                    <div className="flex items-baseline space-x-2">
-                        <p className="text-2xl font-bold text-gray-900">{value}</p>
-                        <span className="text-sm text-gray-500">{unit}</span>
-                    </div>
-                    {trend && (
-                        <div className={`flex items-center space-x-1 text-sm ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {trend > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                            <span>{Math.abs(trend)}%</span>
+    const renderMetricCard = (title, value, unit, icon, color, trend) => {
+        const IconComponent = icon;
+        return (
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-600">{title}</p>
+                        <div className="flex items-baseline space-x-2">
+                            <p className="text-2xl font-bold text-gray-900">{value}</p>
+                            <span className="text-sm text-gray-500">{unit}</span>
                         </div>
-                    )}
+                        {trend && (
+                            <div className={`flex items-center space-x-1 text-sm ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {trend > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                <span>{Math.abs(trend)}%</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className={`p-3 rounded-xl ${color}`}>
+                        <IconComponent className="h-6 w-6" />
+                    </div>
                 </div>
-               
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderProgressBar = (progress, color = 'bg-blue-500') => (
         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -281,9 +286,6 @@ const GovernmentHelpCentreDashboard = () => {
     );
 
     return (
-
-
-        <>
             <div className="min-h-screen bg-gray-50">
                 {/* Header */}
                 <header className="bg-white shadow-sm border-b border-gray-200">
@@ -641,7 +643,7 @@ const GovernmentHelpCentreDashboard = () => {
                                             <div className="text-center">
                                                 <div className="text-3xl font-bold text-blue-600 mb-2">{systemMetrics.averageResponseTime}</div>
                                                 <p className="text-sm text-gray-600">Avg Response Time (min)</p>
-                                                <p className="text-xs text-gray-500">Target: < 5 min</p>
+                                                <p className="text-xs text-gray-500">Target: &lt; 5 min</p>
                                             </div>
                                             <div className="text-center">
                                                 <div className="text-3xl font-bold text-purple-600 mb-2">97.2%</div>
@@ -1197,11 +1199,9 @@ const GovernmentHelpCentreDashboard = () => {
                             </div>
                         </div>
                     </div>
-
                 )}
-
             </div>
-        </>
+
     );
 };
 
