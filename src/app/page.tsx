@@ -18,7 +18,7 @@ import {
   Heart,
   Globe,
   Database,
-  Smartphone
+  Smartphone,
 } from 'lucide-react';
 
 const RescueLankaLanding = () => {
@@ -54,7 +54,10 @@ const RescueLankaLanding = () => {
               <a href="#how-it-works" className="text-gray-700 hover:text-red-600 transition-colors">How It Works</a>
               <a href="#users" className="text-gray-700 hover:text-red-600 transition-colors">For Users</a>
               <button className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                Get Started
+              
+                  
+                  Get Started
+                
               </button>
             </div>
 

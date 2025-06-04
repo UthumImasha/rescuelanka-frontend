@@ -21,8 +21,10 @@ import {
     Camera
 } from 'lucide-react';
 import Link from 'next/link';
-
 import Image from 'next/image';
+import { auth, db } from '@/app/lib/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 const RegisterPage = () => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -32,24 +34,22 @@ const RegisterPage = () => {
         lastName: '',
         email: '',
         phone: '',
-
         location: '',
         organization: '',
         role: '',
         experience: '',
         specialization: '',
         emergencyContact: '',
-
         password: '',
         confirmPassword: '',
         agreeToTerms: false,
         agreeToEmails: false
     });
-
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [success, setSuccess] = useState(false);
 
     const userTypes = [
         {
@@ -92,12 +92,10 @@ const RegisterPage = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         const checked = (e.target as HTMLInputElement).checked;
-
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
-
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -108,7 +106,6 @@ const RegisterPage = () => {
 
     const validateStep = (step: number) => {
         const newErrors: { [key: string]: string } = {};
-
         if (step === 1) {
             if (!formData.firstName) newErrors.firstName = 'First name is required';
             if (!formData.lastName) newErrors.lastName = 'Last name is required';
@@ -119,7 +116,6 @@ const RegisterPage = () => {
             }
             if (!formData.phone) newErrors.phone = 'Phone number is required';
         }
-
         if (step === 2) {
             if (!formData.location) newErrors.location = 'Location is required';
             if (formData.userType !== 'affected-individual') {
@@ -128,7 +124,6 @@ const RegisterPage = () => {
             }
             if (!formData.specialization) newErrors.specialization = 'Specialization is required';
         }
-
         if (step === 3) {
             if (!formData.password) {
                 newErrors.password = 'Password is required';
@@ -144,7 +139,6 @@ const RegisterPage = () => {
                 newErrors.agreeToTerms = 'You must agree to the terms and conditions';
             }
         }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -161,27 +155,41 @@ const RegisterPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setSuccess(false);
         if (!validateStep(3)) return;
-
         setIsLoading(true);
-
+        setErrors({});
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            console.log('Registration data:', formData);
-           
-        } catch (error) {
-            console.error('Registration error:', error);
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                formData.email,
+                formData.password
+            );
+            const user = userCredential.user;
+            const { password, confirmPassword, ...userProfile } = formData;
+            await setDoc(doc(db, 'users', user.uid), {
+                ...userProfile,
+                uid: user.uid,
+                createdAt: new Date()
+            });
+            setSuccess(true);
+        } catch (error: any) {
+            let errorMsg = 'Registration failed. Please try again.';
+            if (error.code === 'auth/email-already-in-use') {
+                errorMsg = 'Email is already in use.';
+            } else if (error.code === 'auth/weak-password') {
+                errorMsg = 'Password is too weak.';
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+            setErrors({ firebase: errorMsg });
         } finally {
             setIsLoading(false);
         }
     };
 
-    const selectedUserType = userTypes.find(type => type.value === formData.userType);
-
     const renderStep1 = () => (
         <div className="space-y-6">
-            {/* User Type Selection */}
             <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Choose your role</h3>
                 <div className="grid grid-cols-1 gap-4">
@@ -218,8 +226,6 @@ const RegisterPage = () => {
                     ))}
                 </div>
             </div>
-
-            {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -244,7 +250,6 @@ const RegisterPage = () => {
                         </p>
                     )}
                 </div>
-
                 <div>
                     <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
                         Last Name *
@@ -269,7 +274,6 @@ const RegisterPage = () => {
                     )}
                 </div>
             </div>
-
             <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email Address *
@@ -296,7 +300,6 @@ const RegisterPage = () => {
                     </p>
                 )}
             </div>
-
             <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number *
@@ -354,7 +357,6 @@ const RegisterPage = () => {
                     </p>
                 )}
             </div>
-
             {formData.userType !== 'affected-individual' && (
                 <>
                     <div>
@@ -383,7 +385,6 @@ const RegisterPage = () => {
                             </p>
                         )}
                     </div>
-
                     <div>
                         <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
                             Your Role *
@@ -412,7 +413,6 @@ const RegisterPage = () => {
                     </div>
                 </>
             )}
-
             <div>
                 <label htmlFor="specialization" className="block text-sm font-medium text-gray-700 mb-1">
                     Specialization/Area of Help *
@@ -437,7 +437,6 @@ const RegisterPage = () => {
                     </p>
                 )}
             </div>
-
             <div>
                 <label htmlFor="experience" className="block text-sm font-medium text-gray-700 mb-1">
                     Experience Level
@@ -456,7 +455,6 @@ const RegisterPage = () => {
                     <option value="expert">Expert (10+ years)</option>
                 </select>
             </div>
-
             <div>
                 <label htmlFor="emergencyContact" className="block text-sm font-medium text-gray-700 mb-1">
                     Emergency Contact
@@ -521,7 +519,6 @@ const RegisterPage = () => {
                     Password must be at least 8 characters long
                 </p>
             </div>
-
             <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                     Confirm Password *
@@ -559,8 +556,6 @@ const RegisterPage = () => {
                     </p>
                 )}
             </div>
-
-            {/* Terms and Conditions */}
             <div className="space-y-4">
                 <div className="flex items-start">
                     <div className="flex items-center h-5">
@@ -593,7 +588,6 @@ const RegisterPage = () => {
                         {errors.agreeToTerms}
                     </p>
                 )}
-
                 <div className="flex items-start">
                     <div className="flex items-center h-5">
                         <input
@@ -618,7 +612,6 @@ const RegisterPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl mx-auto">
-                {/* Header */}
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center space-x-2 mb-6 hover:opacity-80 transition-opacity">
                         <div className="flex items-center space-x-2">
@@ -630,8 +623,6 @@ const RegisterPage = () => {
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">Join the Response Team</h2>
                     <p className="text-gray-600">Create your account to start helping your community</p>
                 </div>
-
-                {/* Progress Steps */}
                 <div className="mb-8">
                     <div className="flex items-center justify-center">
                         {[1, 2, 3].map((step) => (
@@ -661,14 +652,22 @@ const RegisterPage = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
                     {currentStep === 1 && renderStep1()}
                     {currentStep === 2 && renderStep2()}
                     {currentStep === 3 && renderStep3()}
-
-                    {/* Navigation Buttons */}
+                    {errors.firebase && (
+                        <div className="mb-4 text-red-600 flex items-center">
+                            <AlertCircle className="h-5 w-5 mr-2" />
+                            {errors.firebase}
+                        </div>
+                    )}
+                    {success && (
+                        <div className="mb-4 text-green-600 flex items-center">
+                            <CheckCircle className="h-5 w-5 mr-2" />
+                            Registration successful!
+                        </div>
+                    )}
                     <div className="flex justify-between pt-6 mt-6 border-t border-gray-200">
                         <button
                             type="button"
@@ -678,7 +677,6 @@ const RegisterPage = () => {
                         >
                             Back
                         </button>
-
                         {currentStep < 3 ? (
                             <button
                                 type="button"
@@ -709,8 +707,6 @@ const RegisterPage = () => {
                         )}
                     </div>
                 </form>
-
-                {/* Emergency Access */}
                 <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
                     <div className="flex items-center">
                         <AlertCircle className="h-5 w-5 text-orange-600 mr-2" />
@@ -725,8 +721,6 @@ const RegisterPage = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Sign In Link */}
                 <div className="text-center mt-6">
                     <p className="text-gray-600">
                         Already have an account?{' '}
@@ -735,8 +729,6 @@ const RegisterPage = () => {
                         </Link>
                     </p>
                 </div>
-
-                {/* Footer */}
                 <div className="text-center text-xs text-gray-500 mt-8">
                     <p>Your information is secure and will only be used for emergency response coordination.</p>
                 </div>
