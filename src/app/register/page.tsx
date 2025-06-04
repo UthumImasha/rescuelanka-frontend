@@ -21,8 +21,9 @@ import {
     Camera
 } from 'lucide-react';
 import Link from 'next/link';
-
 import Image from 'next/image';
+import { useRegisterUserMutation, UserRoleType } from '@/lib/generated/graphql';
+
 
 const RegisterPage = () => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -50,6 +51,8 @@ const RegisterPage = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    const [registerUser] = useRegisterUserMutation();
 
     const userTypes = [
         {
@@ -167,7 +170,22 @@ const RegisterPage = () => {
         setIsLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await registerUser({
+                variables: {
+                    userData: {
+                        name: "Varuna Gunarathna",
+                        role: UserRoleType.Admin,
+                        email: "varuna@gmail.com",
+                        phone: "0714709466",
+                        residentLatitude: 5.566,
+                        residentLongitude: 1.1569,
+                        residentAddress: "528/H, Valihidha Rd, Kaduwela",
+                        isActive: true,
+                        skills: ["rowing", "swimming", "hiking"],
+                        password: "krag2003",
+                    },
+                },
+            });
             console.log('Registration data:', formData);
            
         } catch (error) {
