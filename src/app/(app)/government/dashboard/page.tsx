@@ -254,7 +254,7 @@ const GovernmentHelpCentreDashboard = () => {
     const renderMetricCard = (title, value, unit, icon, color, trend) => {
         const IconComponent = icon;
         return (
-            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow text-black">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-gray-600">{title}</p>
