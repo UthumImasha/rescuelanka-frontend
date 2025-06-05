@@ -1,25 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, {useState} from 'react';
 import {
-    Shield,
+    AlertCircle,
+    Award,
+    Building,
+    CheckCircle,
     Eye,
     EyeOff,
-    Mail,
-    Lock,
-    User,
-    Phone,
-    MapPin,
-    AlertCircle,
-    CheckCircle,
-    Users,
-    Heart,
     Globe,
-    Building,
-    Award,
-    Loader
+    Heart,
+    Loader,
+    Lock,
+    Mail,
+    MapPin,
+    Phone,
+    Shield,
+    User,
+    Users
 } from 'lucide-react';
 import Image from 'next/image';
+import {useRegisterUserMutation, UserRoleType} from "@/lib/generated/graphql";
+
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
         fullName: '',
@@ -37,6 +39,8 @@ const RegisterPage = () => {
     const [locationLoading, setLocationLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState(false);
+
+    const [registerUser] = useRegisterUserMutation();
 
     const roles = [
         {
@@ -222,8 +226,22 @@ const RegisterPage = () => {
         setSuccess(false);
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await registerUser({
+                variables: {
+                    userData: {
+                        name: "Varuna Gunarathna",
+                        role: UserRoleType.Admin,
+                        email: "varuna@gmail.com",
+                        phone: "0714709466",
+                        residentLatitude: 5.566,
+                        residentLongitude: 1.1569,
+                        residentAddress: "528/H, Valihidha Rd, Kaduwela",
+                        isActive: true,
+                        skills: ["rowing", "swimming", "hiking"],
+                        password: "krag2003",
+                    }
+                }
+            });
             setSuccess(true);
             console.log('Registration data:', formData);
         } catch (error) {
@@ -239,7 +257,7 @@ const RegisterPage = () => {
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center space-x-2 mb-6">
                         <Image src="/logo.png" alt="Rescue Lanka Logo"
-                            width={200} height={100}
+                               width={200} height={100}
                         />
                     </div>
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">Join the Response Team</h2>
@@ -263,7 +281,7 @@ const RegisterPage = () => {
                                 value={formData.fullName}
                                 onChange={handleInputChange}
                                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.fullName ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                }`}
                                 placeholder="Enter your full name"
                             />
                         </div>
@@ -291,7 +309,7 @@ const RegisterPage = () => {
                                 value={formData.phone}
                                 onChange={handleInputChange}
                                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.phone ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                }`}
                                 placeholder="+94 XX XXX XXXX"
                             />
                         </div>
@@ -320,7 +338,7 @@ const RegisterPage = () => {
                                     value={formData.location}
                                     onChange={handleInputChange}
                                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.location ? 'border-red-300' : 'border-gray-300'
-                                        }`}
+                                    }`}
                                     placeholder="Latitude, Longitude"
                                     readOnly
                                 />
@@ -362,7 +380,7 @@ const RegisterPage = () => {
                                 value={formData.address}
                                 onChange={handleInputChange}
                                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.address ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                }`}
                                 placeholder="Enter your full address"
                             />
                         </div>
@@ -391,15 +409,15 @@ const RegisterPage = () => {
                                         className="sr-only"
                                     />
                                     <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${formData.role === role.value
-                                            ? 'border-red-600 bg-red-50'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                        }`}>
+                                        ? 'border-red-600 bg-red-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}>
                                         <div className="flex items-center">
                                             <role.icon className={`h-5 w-5 mr-3 ${formData.role === role.value ? 'text-red-600' : 'text-gray-400'
-                                                }`} />
+                                            }`} />
                                             <div className="flex-1">
                                                 <h4 className={`font-medium text-sm ${formData.role === role.value ? 'text-red-600' : 'text-gray-900'
-                                                    }`}>
+                                                }`}>
                                                     {role.label}
                                                 </h4>
                                                 <p className="text-xs text-gray-600">{role.description}</p>
@@ -439,7 +457,7 @@ const RegisterPage = () => {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.email ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                }`}
                                 placeholder={formData.role === 'government' ? 'name@agency.gov' : 'Enter your email'}
                             />
                         </div>
@@ -467,7 +485,7 @@ const RegisterPage = () => {
                                     value={formData.skills}
                                     onChange={handleInputChange}
                                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.skills ? 'border-red-300' : 'border-gray-300'
-                                        }`}
+                                    }`}
                                 >
                                     <option value="">Select your specialization</option>
                                     {skillOptions[formData.role]?.map((skill) => (
@@ -500,7 +518,7 @@ const RegisterPage = () => {
                                 value={formData.password}
                                 onChange={handleInputChange}
                                 className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.password ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                }`}
                                 placeholder="Create a strong password"
                             />
                             <button

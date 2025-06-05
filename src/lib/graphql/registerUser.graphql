@@ -1,0 +1,15 @@
+mutation RegisterUser($userData: UserCreateGQLInput!) {
+  registerUser(userData: $userData) {
+    id
+    name
+    role
+    email
+    phone
+    residentLatitude
+    residentLongitude
+    residentAddress
+    isActive
+    createdAt
+    skills
+  }
+}

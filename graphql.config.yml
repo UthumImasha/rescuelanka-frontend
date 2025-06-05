@@ -1,0 +1,2 @@
+schema: https://intellihack5-backend-27mgf.ondigitalocean.app/disaster-management-codelabs-ba2/graphql
+documents: src/lib/graphql/**/*.graphql
