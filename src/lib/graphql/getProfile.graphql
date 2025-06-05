@@ -1,0 +1,15 @@
+query GetProfile {
+    getProfile {
+        id
+        email
+        name
+        role
+        phone
+        residentLatitude
+        residentLongitude
+        residentAddress
+        isActive
+        skills
+        createdAt
+    }
+}
