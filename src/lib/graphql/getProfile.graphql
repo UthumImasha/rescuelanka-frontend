@@ -2,11 +2,14 @@ query GetProfile {
     getProfile {
         id
         email
-        firstName
-        lastName
+        name
         role
         phone
+        residentLatitude
+        residentLongitude
+        residentAddress
+        isActive
+        skills
         createdAt
-        updatedAt
     }
 }
