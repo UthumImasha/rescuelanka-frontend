@@ -37,7 +37,7 @@ const RegisterPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [locationLoading, setLocationLoading] = useState(false);
-    const [errors, setErrors] = useState({});
+    const [errors, setErrors] = useState<any>({});
     const [success, setSuccess] = useState(false);
 
     const [registerUser] = useRegisterUserMutation();
@@ -170,7 +170,7 @@ const RegisterPage = () => {
     };
 
     const validateForm = () => {
-        const newErrors = {};
+        const newErrors: any = {};
 
         if (!formData.fullName.trim()) {
             newErrors.fullName = 'Full name is required';
