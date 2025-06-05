@@ -16,7 +16,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { saveToken } from '@/utils/auth';
-import { useLoginUserMutation } from "@/lib/generated/graphql"; // Ensure this path is correct
+import { useLoginUserMutation } from "@/lib/generated/graphql";
 import { useFormik } from 'formik'; // Import useFormik
 import * as Yup from 'yup'; // Import Yup
 

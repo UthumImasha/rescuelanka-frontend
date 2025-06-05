@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     X, Send, Upload, Utensils, Home, Stethoscope, Shirt, Droplets, Zap, MapPin
 } from 'lucide-react';
+import {useCreateReportMutation, useLoginUserMutation} from "@/lib/generated/graphql";
 
 // Help types
 const HELP_TYPES = [
@@ -26,6 +27,8 @@ const RequestHelpModal = ({
     const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
     const [locationStatus, setLocationStatus] = useState('Detecting...');
     const [images, setImages] = useState([]);
+
+    const [report, { loading: isLoading, error: apolloMutationError }] = useCreateReportMutation();
 
     // Auto-detect location on mount
     useEffect(() => {
