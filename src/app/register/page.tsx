@@ -29,33 +29,32 @@ const RegisterPage = () => {
     const [locationLoading, setLocationLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
-    // Destructure `loading` as `isLoading` and `error` as `apolloMutationError`
     const [registerUser, {loading: isLoading, error: apolloMutationError}] = useRegisterUserMutation();
 
     const roles = [
         {
-            value: 'affected-individual',
+            value: UserRoleType.User,
             label: 'Affected Individual',
             icon: Users,
             color: 'text-green-600',
             description: 'Individual seeking assistance'
         },
         {
-            value: 'volunteer',
+            value: UserRoleType.User,
             label: 'Volunteer',
             icon: Heart,
             color: 'text-blue-600',
             description: 'Community volunteer ready to help'
         },
         {
-            value: 'first-responder',
+            value: UserRoleType.User,
             label: 'First Responder',
             icon: Shield,
             color: 'text-red-600',
             description: 'Emergency services, fire, police, medical'
         },
         {
-            value: 'government',
+            value: UserRoleType.Admin,
             label: 'Government',
             icon: Globe,
             color: 'text-purple-600',
@@ -112,6 +111,19 @@ const RegisterPage = () => {
         agreeToTerms: Yup.boolean().oneOf([true], 'You must agree to the terms and conditions'),
     });
 
+    const getRoleEnum = (roleStr: string): UserRoleType => {
+        switch (roleStr.toLowerCase()) {
+            case UserRoleType.Admin:
+                return UserRoleType.Admin;
+            case UserRoleType.User:
+                return UserRoleType.User;
+            case UserRoleType.Guest:
+                return UserRoleType.Guest;
+            default:
+                return UserRoleType.User;
+        }
+    };
+
     const formik = useFormik({
         initialValues: {
             fullName: '',
@@ -140,16 +152,13 @@ const RegisterPage = () => {
                     return;
                 }
 
-                // Correct mapping for the GraphQL UserRoleType enum
-                const userRole = UserRoleType.User; // As per your requirement
-
                 const userSkills = values.skills ? [values.skills] : [];
 
                 await registerUser({
                     variables: {
                         userData: {
                             name: values.fullName,
-                            role: userRole,
+                            role: getRoleEnum(values.role),
                             email: values.email,
                             phone: values.phone,
                             residentLatitude: residentLatitude,

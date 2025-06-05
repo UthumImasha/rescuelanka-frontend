@@ -1,0 +1,25 @@
+mutation CreateReport($reportData: ReportGQLInput!) {
+    createReport(reportData: $reportData) {
+        id
+        type
+        title
+        description
+        userId
+        reportLatitude
+        reportLongitude
+        isLocationAffected
+        startTime
+        injuriesOrMedicalConditions
+
+        evacuationRequired
+        shelterRequired
+        medicalAidRequired
+        clothingRequired
+        electricityAvailable
+        drinkingWaterAvailable
+        drinkingWaterDuration
+        foodAvailable
+        foodDuration
+        animalsPresent
+    }
+}
