@@ -22,8 +22,7 @@ const LoginPage = () => {
     const [loginError, setLoginError] = useState('');
     const router = useRouter();
 
-    // Destructure `loading` as `isLoading` and `error` as `apolloMutationError`
-    const [loginUser, { loading: isLoading, error: apolloMutationError }] = useLoginUserMutation();
+    const [loginUser, { loading: isUserLoginLoading, error: apolloMutationError }] = useLoginUserMutation();
 
     // Note: The `userType` is part of your UI but not sent in the `loginUser` mutation variables.
     // If your backend needs this for login, you'd need to update your GraphQL schema and mutation.
@@ -263,10 +262,10 @@ const LoginPage = () => {
                     {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isUserLoginLoading}
                         className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
-                        {isLoading ? (
+                        {isUserLoginLoading ? (
                             <div className="flex items-center">
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                 Signing in...

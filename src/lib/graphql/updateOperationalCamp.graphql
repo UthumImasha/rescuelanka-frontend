@@ -1,0 +1,13 @@
+mutation UpdateOperationalCamp($inputData: OperationalCampGQLInput!) {
+    updateOperationalCamp(inputData: $inputData) {
+        name
+        latitude
+        longitude
+        address
+        campTypes
+        personnelCount
+        resourceAvailable
+        status
+        timestamp
+    }
+}

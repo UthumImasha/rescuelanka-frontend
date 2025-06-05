@@ -1,0 +1,15 @@
+mutation DeleteRefugeeCamp($campId: ID!) {
+    deleteRefugeeCamp(campId: $campId) {
+        id
+        name
+        latitude
+        longitude
+        address
+        capacity
+        currentOccupancy
+        servicesOffered
+        status
+        createdAt
+        lastUpdatedAt
+    }
+}

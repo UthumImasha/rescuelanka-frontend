@@ -1,0 +1,8 @@
+mutation CreateOrganization($inputData: OrganizationGQLInput!) {
+    createOrganization(inputData: $inputData) {
+        name
+        responsibleEventTypes
+        services
+        timestamp
+    }
+}

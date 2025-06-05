@@ -1,0 +1,9 @@
+mutation AssignUserToOrganization($inputData:UserOrganizationAssignmentInput!) {
+    assignUserToOrganization(inputData: $inputData) {
+        userId
+        orgId
+        orgRole
+        assignedDatetime
+        assignmentEnded
+    }
+}

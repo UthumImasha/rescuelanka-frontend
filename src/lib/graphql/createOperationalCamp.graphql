@@ -1,0 +1,13 @@
+mutation CreateOperationalCamp($inputData: OperationalCampGQLInput!) {
+    createOperationalCamp(inputData: $inputData) {
+        name
+        latitude
+        longitude
+        address
+        campTypes
+        personnelCount
+        resourceAvailable
+        status
+        timestamp
+    }
+}

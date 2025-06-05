@@ -1,0 +1,14 @@
+mutation DeleteOperationalCamp($campId: ID!) {
+    deleteOperationalCamp(campId: $campId) {
+        id
+        name
+        latitude
+        longitude
+        address
+        campTypes
+        personnelCount
+        resourceAvailable
+        status
+        timestamp
+    }
+}

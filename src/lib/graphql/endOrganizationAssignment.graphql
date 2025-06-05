@@ -1,0 +1,9 @@
+mutation EndOrganizationAssignment($inputData: UserOrganizationAssignmentInput!) {
+    endOrganizationAssignment(inputData: $inputData) {
+        userId
+        orgId
+        orgRole
+        assignedDatetime
+        assignmentEnded
+    }
+}

@@ -1,0 +1,15 @@
+mutation CreateRefugeeCamp($inputData: RefugeeCampGQLInput!) {
+    createRefugeeCamp(inputData: $inputData) {
+        id
+        name
+        latitude
+        longitude
+        address
+        capacity
+        currentOccupancy
+        servicesOffered
+        status
+        createdAt
+        lastUpdatedAt
+    }
+}

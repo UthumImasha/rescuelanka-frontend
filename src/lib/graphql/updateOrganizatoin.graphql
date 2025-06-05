@@ -1,0 +1,8 @@
+mutation UpdateOrganizatoin($inputData: OrganizationGQLInput!) {
+    updateOrganization(inputData: $inputData) {
+        name
+        responsibleEventTypes
+        services
+        timestamp
+    }
+}
