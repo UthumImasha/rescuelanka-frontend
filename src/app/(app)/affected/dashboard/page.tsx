@@ -440,6 +440,13 @@ const AffectedIndividualDashboard = () => {
                                     <Plus className="h-5 w-5" />
                                     <span>Request Help</span>
                                 </Link>
+                                <Link
+                                    href={`/vlm-analysis`}
+                                    className="w-full flex items-center space-x-3 px-3 py-2 bg-red-50 text-green-700 rounded-lg hover:bg-red-100 transition-colors"
+                                >
+                                    <Plus className="h-5 w-5" />
+                                    <span>Request Help Image</span>
+                                </Link>
 
 
                                 {pendingSync.length > 0 && isOnline && (
