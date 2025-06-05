@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import GoogleMapView from '../../../../components/MissionMap.js'
 import {
     Shield,
     Users,
@@ -36,6 +37,7 @@ import {
     Headphones,
 } from 'lucide-react';
 import Image from 'next/image';
+
 
 const VolunteerDashboard = () => {
     const [activeTab, setActiveTab] = useState('assignments');
@@ -345,7 +347,7 @@ const VolunteerDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 text-black">
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -688,16 +690,7 @@ const VolunteerDashboard = () => {
                         {/* Map Tab */}
                         {activeTab === 'map' && (
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Mission Map</h2>
-                                <div className="bg-white rounded-xl shadow-sm p-6">
-                                    <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
-                                        <div className="text-center">
-                                            <Map className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                            <h3 className="text-lg font-medium text-gray-900 mb-2">Interactive Map</h3>
-                                            <p className="text-gray-600">Map integration would be implemented here</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <GoogleMapView />
                             </div>
                         )}
 

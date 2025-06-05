@@ -58,7 +58,7 @@ import {
     SirensIcon,
     PhoneCall
 } from 'lucide-react';
-
+import RequestHelp from './requestGelp';
 const AffectedIndividualDashboard = () => {
     const [activeTab, setActiveTab] = useState('emergency');
     const [helpRequestModal, setHelpRequestModal] = useState(false);
@@ -217,10 +217,10 @@ const AffectedIndividualDashboard = () => {
 
         try {
             console.log('Syncing pending data:', pendingSync);
-            
+
             setPendingSync([]);
             localStorage.removeItem('pendingSync');
-            
+
             setNotifications(prev => [{
                 id: Date.now(),
                 text: `Successfully synced ${pendingSync.length} pending items`,
@@ -362,7 +362,7 @@ const AffectedIndividualDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 text-black">
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -527,13 +527,12 @@ const AffectedIndividualDashboard = () => {
                         {activeTab === 'emergency' && (
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Emergency Assistance Center</h2>
-                                
+
                                 {/* Quick Request Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     {[
                                         { type: 'food', label: 'Food & Water', icon: Utensils, color: 'orange' },
                                         { type: 'shelter', label: 'Shelter', icon: Home, color: 'blue' },
-                                        { type: 'medical', label: 'Medical Aid', icon: Stethoscope, color: 'red' }
                                     ].map((item) => (
                                         <div
                                             key={item.type}
@@ -676,7 +675,7 @@ const AffectedIndividualDashboard = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                                                 <div className="flex items-start space-x-3">
                                                     <div className="bg-green-100 rounded-full p-2">
@@ -819,197 +818,12 @@ const AffectedIndividualDashboard = () => {
             </div>
 
             {/* Help Request Modal */}
-            {helpRequestModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-2xl font-bold text-gray-900">Request Emergency Help</h3>
-                                <button
-                                    onClick={() => setHelpRequestModal(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Type of Help Needed</label>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {[
-                                            { id: 'food', label: 'Food & Water', icon: Utensils },
-                                            { id: 'shelter', label: 'Shelter', icon: Home },
-                                            { id: 'medical', label: 'Medical Aid', icon: Stethoscope },
-                                            { id: 'clothing', label: 'Clothing', icon: Shirt },
-                                            { id: 'water', label: 'Clean Water', icon: Droplets },
-                                            { id: 'power', label: 'Power/Fuel', icon: Zap }
-                                        ].map((type) => (
-                                            <button
-                                                key={type.id}
-                                                onClick={() => setRequestType(type.id)}
-                                                className={`flex flex-col items-center space-y-2 p-4 rounded-lg border transition-colors ${requestType === type.id
-                                                    ? 'border-red-500 bg-red-50 text-red-700'
-                                                    : 'border-gray-300 hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                <type.icon className="h-6 w-6" />
-                                                <span className="text-sm">{type.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">How would you like to submit your request?</label>
-                                    <div className="flex space-x-4">
-                                        {[
-                                            { id: 'text', label: 'Text Description', icon: FileText },
-                                            { id: 'image', label: 'Upload Images', icon: Camera },
-                                            { id: 'voice', label: 'Voice Message', icon: Mic }
-                                        ].map((method) => (
-                                            <button
-                                                key={method.id}
-                                                onClick={() => setInputMethod(method.id)}
-                                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${inputMethod === method.id
-                                                    ? 'border-red-500 bg-red-50 text-red-700'
-                                                    : 'border-gray-300 hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                <method.icon className="h-4 w-4" />
-                                                <span>{method.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {inputMethod === 'text' && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Describe your situation</label>
-                                        <textarea
-                                            value={requestText}
-                                            onChange={(e) => setRequestText(e.target.value)}
-                                            className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                            placeholder="Please describe what help you need, your location, and any urgent details..."
-                                        />
-                                    </div>
-                                )}
-
-                                {inputMethod === 'image' && (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Images</label>
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                                                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                                <p className="text-gray-600 mb-4">Click to upload images showing your situation</p>
-                                                <input
-                                                    type="file"
-                                                    multiple
-                                                    accept="image/*"
-                                                    onChange={handleImageUpload}
-                                                    className="hidden"
-                                                    id="help-image-upload"
-                                                />
-                                                <label
-                                                    htmlFor="help-image-upload"
-                                                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-                                                >
-                                                    Select Images
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        {uploadedImages.length > 0 && (
-                                            <div>
-                                                <h4 className="font-medium text-gray-900 mb-2">Uploaded Images</h4>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    {uploadedImages.map((image) => (
-                                                        <div key={image.id} className="border border-gray-200 rounded-lg p-4">
-                                                            <img
-                                                                src={image.preview}
-                                                                alt={image.name}
-                                                                className="w-full h-32 object-cover rounded mb-2"
-                                                            />
-                                                            <p className="text-sm text-gray-600 mb-2">{image.name}</p>
-                                                            {analysisResults.find(r => r.imageId === image.id) && (
-                                                                <div className="bg-blue-50 p-2 rounded">
-                                                                    <p className="text-xs font-medium text-blue-900 mb-1">AI Analysis:</p>
-                                                                    <ul className="text-xs text-blue-700 space-y-1">
-                                                                        {analysisResults.find(r => r.imageId === image.id).results.map((result, idx) => (
-                                                                            <li key={idx}>• {result}</li>
-                                                                        ))}
-                                                                    </ul>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {inputMethod === 'voice' && (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Voice Message</label>
-                                            <div className="border border-gray-300 rounded-lg p-6 text-center">
-                                                <Headphones className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                                <p className="text-gray-600 mb-4">Record your emergency request</p>
-                                                <button
-                                                    onClick={startVoiceRecording}
-                                                    disabled={isRecording}
-                                                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${isRecording 
-                                                        ? 'bg-red-600 text-white' 
-                                                        : 'bg-gray-600 text-white hover:bg-gray-700'}`}
-                                                >
-                                                    {isRecording ? (
-                                                        <>
-                                                            <PauseCircle className="h-4 w-4" />
-                                                            <span>Recording...</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <PlayCircle className="h-4 w-4" />
-                                                            <span>Start Recording</span>
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Transcription</label>
-                                            <textarea
-                                                value={requestText}
-                                                onChange={(e) => setRequestText(e.target.value)}
-                                                className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                                placeholder="Voice transcription will appear here..."
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex space-x-4 pt-6 border-t border-gray-200">
-                                    <button
-                                        onClick={() => setHelpRequestModal(false)}
-                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSubmitHelpRequest}
-                                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                    >
-                                        <Send className="h-4 w-4" />
-                                        <span>Submit Request</span>
-                                        {!isOnline && <CloudOff className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <RequestHelp
+                open={helpRequestModal}
+                onClose={() => setHelpRequestModal(false)}
+                onSubmit={handleSubmitHelpRequest}
+                isOnline={isOnline}
+            />
 
             {/* Field Report Modal */}
             {reportModal && (
@@ -1081,8 +895,8 @@ const AffectedIndividualDashboard = () => {
                                 <div className="h-80 overflow-y-auto border border-gray-200 rounded-lg p-4 space-y-4">
                                     {chatHistory.map((message) => (
                                         <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-xs px-4 py-2 rounded-lg ${message.type === 'user' 
-                                                ? 'bg-red-600 text-white' 
+                                            <div className={`max-w-xs px-4 py-2 rounded-lg ${message.type === 'user'
+                                                ? 'bg-red-600 text-white'
                                                 : 'bg-gray-100 text-gray-900'}`}>
                                                 <p className="text-sm">{message.message}</p>
                                                 <p className="text-xs mt-1 opacity-70">
