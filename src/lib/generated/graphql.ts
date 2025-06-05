@@ -205,8 +205,12 @@ export type Query = {
   findUserOrgAssignments: Array<UserOrganizationAssignmentPayload>;
   getOperationalCampById?: Maybe<OperationalCampGqlPayload>;
   getOrganizationById?: Maybe<OrganizationGqlPayload>;
+  getProfile: UserGqlPayload;
   getRefugeeCampById?: Maybe<RefugeeCampGqlPayload>;
+  getReport?: Maybe<ReportGqlPayload>;
   hello: Scalars['String']['output'];
+  listAllReports: Array<ReportGqlPayload>;
+  listReportsForEvent: Array<ReportGqlPayload>;
 };
 
 
@@ -269,6 +273,24 @@ export type QueryGetRefugeeCampByIdArgs = {
   campId: Scalars['String']['input'];
 };
 
+
+export type QueryGetReportArgs = {
+  reportId: Scalars['String']['input'];
+};
+
+
+export type QueryListAllReportsArgs = {
+  limit?: Scalars['Int']['input'];
+  skip?: Scalars['Int']['input'];
+};
+
+
+export type QueryListReportsForEventArgs = {
+  eventId: Scalars['String']['input'];
+  limit?: Scalars['Int']['input'];
+  skip?: Scalars['Int']['input'];
+};
+
 export type RefugeeCampGqlInput = {
   address?: InputMaybe<Scalars['String']['input']>;
   capacity?: InputMaybe<Scalars['Int']['input']>;
@@ -313,6 +335,8 @@ export type RefugeeCampGqlUpdate = {
 
 export type ReportGqlInput = {
   animalsPresent?: InputMaybe<Scalars['String']['input']>;
+  clothingRequired?: InputMaybe<Scalars['Boolean']['input']>;
+  description: Scalars['String']['input'];
   drinkingWaterAvailable?: InputMaybe<Scalars['Boolean']['input']>;
   drinkingWaterDuration?: InputMaybe<Scalars['Int']['input']>;
   electricityAvailable?: InputMaybe<Scalars['Boolean']['input']>;
@@ -323,10 +347,13 @@ export type ReportGqlInput = {
   foodDuration?: InputMaybe<Scalars['Int']['input']>;
   injuriesOrMedicalConditions?: InputMaybe<Scalars['String']['input']>;
   isLocationAffected: Scalars['Boolean']['input'];
+  medicalAidRequired?: InputMaybe<Scalars['Boolean']['input']>;
   reportAddress: Scalars['String']['input'];
   reportLatitude: Scalars['Float']['input'];
   reportLongitude: Scalars['Float']['input'];
+  shelterRequired?: InputMaybe<Scalars['Boolean']['input']>;
   startTime?: InputMaybe<Scalars['DateTime']['input']>;
+  title: Scalars['String']['input'];
   type: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
@@ -334,6 +361,8 @@ export type ReportGqlInput = {
 export type ReportGqlPayload = {
   __typename?: 'ReportGQLPayload';
   animalsPresent?: Maybe<Scalars['String']['output']>;
+  clothingRequired?: Maybe<Scalars['Boolean']['output']>;
+  description: Scalars['String']['output'];
   drinkingWaterAvailable?: Maybe<Scalars['Boolean']['output']>;
   drinkingWaterDuration?: Maybe<Scalars['Int']['output']>;
   electricityAvailable?: Maybe<Scalars['Boolean']['output']>;
@@ -343,9 +372,12 @@ export type ReportGqlPayload = {
   id: Scalars['String']['output'];
   injuriesOrMedicalConditions?: Maybe<Scalars['String']['output']>;
   isLocationAffected: Scalars['Boolean']['output'];
+  medicalAidRequired?: Maybe<Scalars['Boolean']['output']>;
   reportLatitude: Scalars['Float']['output'];
   reportLongitude: Scalars['Float']['output'];
+  shelterRequired?: Maybe<Scalars['Boolean']['output']>;
   startTime?: Maybe<Scalars['DateTime']['output']>;
+  title: Scalars['String']['output'];
   type: Scalars['String']['output'];
   userId: Scalars['String']['output'];
 };
@@ -412,6 +444,26 @@ export enum UserRoleType {
   User = 'user'
 }
 
+export type CreateReportMutationVariables = Exact<{
+  reportData: ReportGqlInput;
+}>;
+
+
+export type CreateReportMutation = { __typename?: 'Mutation', createReport: { __typename?: 'ReportGQLPayload', id: string, type: string, title: string, description: string, userId: string, reportLatitude: number, reportLongitude: number, isLocationAffected: boolean, startTime?: any | null, injuriesOrMedicalConditions?: string | null, evacuationRequired?: boolean | null, shelterRequired?: boolean | null, medicalAidRequired?: boolean | null, clothingRequired?: boolean | null, electricityAvailable?: boolean | null, drinkingWaterAvailable?: boolean | null, drinkingWaterDuration?: number | null, foodAvailable?: boolean | null, foodDuration?: number | null, animalsPresent?: string | null } };
+
+export type GetProfileQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetProfileQuery = { __typename?: 'Query', getProfile: { __typename?: 'UserGQLPayload', id: string, email: string, name: string, role: UserRoleType, phone: string, residentLatitude: any, residentLongitude: any, residentAddress: string, isActive: boolean, skills: Array<string>, createdAt?: any | null } };
+
+export type LoginUserMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+
+export type LoginUserMutation = { __typename?: 'Mutation', loginUser: { __typename?: 'TokenGQLPayload', accessToken: string, tokenType: TokenType } };
+
 export type RegisterUserMutationVariables = Exact<{
   userData: UserCreateGqlInput;
 }>;
@@ -420,6 +472,142 @@ export type RegisterUserMutationVariables = Exact<{
 export type RegisterUserMutation = { __typename?: 'Mutation', registerUser: { __typename?: 'UserGQLPayload', id: string, name: string, role: UserRoleType, email: string, phone: string, residentLatitude: any, residentLongitude: any, residentAddress: string, isActive: boolean, createdAt?: any | null, skills: Array<string> } };
 
 
+export const CreateReportDocument = gql`
+    mutation CreateReport($reportData: ReportGQLInput!) {
+  createReport(reportData: $reportData) {
+    id
+    type
+    title
+    description
+    userId
+    reportLatitude
+    reportLongitude
+    isLocationAffected
+    startTime
+    injuriesOrMedicalConditions
+    evacuationRequired
+    shelterRequired
+    medicalAidRequired
+    clothingRequired
+    electricityAvailable
+    drinkingWaterAvailable
+    drinkingWaterDuration
+    foodAvailable
+    foodDuration
+    animalsPresent
+  }
+}
+    `;
+export type CreateReportMutationFn = Apollo.MutationFunction<CreateReportMutation, CreateReportMutationVariables>;
+
+/**
+ * __useCreateReportMutation__
+ *
+ * To run a mutation, you first call `useCreateReportMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateReportMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createReportMutation, { data, loading, error }] = useCreateReportMutation({
+ *   variables: {
+ *      reportData: // value for 'reportData'
+ *   },
+ * });
+ */
+export function useCreateReportMutation(baseOptions?: Apollo.MutationHookOptions<CreateReportMutation, CreateReportMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateReportMutation, CreateReportMutationVariables>(CreateReportDocument, options);
+      }
+export type CreateReportMutationHookResult = ReturnType<typeof useCreateReportMutation>;
+export type CreateReportMutationResult = Apollo.MutationResult<CreateReportMutation>;
+export type CreateReportMutationOptions = Apollo.BaseMutationOptions<CreateReportMutation, CreateReportMutationVariables>;
+export const GetProfileDocument = gql`
+    query GetProfile {
+  getProfile {
+    id
+    email
+    name
+    role
+    phone
+    residentLatitude
+    residentLongitude
+    residentAddress
+    isActive
+    skills
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useGetProfileQuery__
+ *
+ * To run a query within a React component, call `useGetProfileQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProfileQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetProfileQuery(baseOptions?: Apollo.QueryHookOptions<GetProfileQuery, GetProfileQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetProfileQuery, GetProfileQueryVariables>(GetProfileDocument, options);
+      }
+export function useGetProfileLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProfileQuery, GetProfileQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetProfileQuery, GetProfileQueryVariables>(GetProfileDocument, options);
+        }
+export function useGetProfileSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetProfileQuery, GetProfileQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetProfileQuery, GetProfileQueryVariables>(GetProfileDocument, options);
+        }
+export type GetProfileQueryHookResult = ReturnType<typeof useGetProfileQuery>;
+export type GetProfileLazyQueryHookResult = ReturnType<typeof useGetProfileLazyQuery>;
+export type GetProfileSuspenseQueryHookResult = ReturnType<typeof useGetProfileSuspenseQuery>;
+export type GetProfileQueryResult = Apollo.QueryResult<GetProfileQuery, GetProfileQueryVariables>;
+export const LoginUserDocument = gql`
+    mutation LoginUser($email: String!, $password: String!) {
+  loginUser(email: $email, password: $password) {
+    accessToken
+    tokenType
+  }
+}
+    `;
+export type LoginUserMutationFn = Apollo.MutationFunction<LoginUserMutation, LoginUserMutationVariables>;
+
+/**
+ * __useLoginUserMutation__
+ *
+ * To run a mutation, you first call `useLoginUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLoginUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [loginUserMutation, { data, loading, error }] = useLoginUserMutation({
+ *   variables: {
+ *      email: // value for 'email'
+ *      password: // value for 'password'
+ *   },
+ * });
+ */
+export function useLoginUserMutation(baseOptions?: Apollo.MutationHookOptions<LoginUserMutation, LoginUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LoginUserMutation, LoginUserMutationVariables>(LoginUserDocument, options);
+      }
+export type LoginUserMutationHookResult = ReturnType<typeof useLoginUserMutation>;
+export type LoginUserMutationResult = Apollo.MutationResult<LoginUserMutation>;
+export type LoginUserMutationOptions = Apollo.BaseMutationOptions<LoginUserMutation, LoginUserMutationVariables>;
 export const RegisterUserDocument = gql`
     mutation RegisterUser($userData: UserCreateGQLInput!) {
   registerUser(userData: $userData) {

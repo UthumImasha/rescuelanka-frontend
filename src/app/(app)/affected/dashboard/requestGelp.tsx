@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
     X, Send, Upload, Utensils, Home, Stethoscope, Shirt, Droplets, Zap, MapPin, Loader
 } from 'lucide-react';
+
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../../lib/firebase';
 import { useAuth } from '../../../context/AuthContext';
+import {useCreateReportMutation, useLoginUserMutation} from "@/lib/generated/graphql";
+
 
 // Help types
 const HELP_TYPES = [
@@ -52,6 +55,8 @@ const RequestHelpModal: React.FC<RequestHelpModalProps> = ({
     const [submissionError, setSubmissionError] = useState<string | null>(null);
 
     const { user } = useAuth();
+
+    const [report, { loading: isLoading, error: apolloMutationError }] = useCreateReportMutation();
 
     // Auto-detect location on mount
     useEffect(() => {
