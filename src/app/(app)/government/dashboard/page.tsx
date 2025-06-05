@@ -371,13 +371,7 @@ const GovernmentHelpCentreDashboard = () => {
                                     <Plus className="h-5 w-5" />
                                     <span>Create Task</span>
                                 </button>
-                                <button
-                                    onClick={() => setUserManagementModal(true)}
-                                    className="w-full flex items-center space-x-3 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                                >
-                                    <Users className="h-5 w-5" />
-                                    <span>Manage Users</span>
-                                </button>
+                                
                                 <button
                                     onClick={() => setCommunicationModal(true)}
                                     className="w-full flex items-center space-x-3 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
@@ -385,59 +379,23 @@ const GovernmentHelpCentreDashboard = () => {
                                     <Radio className="h-5 w-5" />
                                     <span>Broadcast Alert</span>
                                 </button>
-                                <button className="w-full flex items-center space-x-3 px-3 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors">
-                                    <Download className="h-5 w-5" />
-                                    <span>Export Reports</span>
-                                </button>
+                               
                             </div>
                         </div>
 
                         {/* System Health */}
-                        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                        <Server className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm text-gray-600">Server Status</span>
-                                    </div>
-                                    <span className="text-sm font-medium text-green-600">Online</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                        <Database className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm text-gray-600">Database</span>
-                                    </div>
-                                    <span className="text-sm font-medium text-green-600">Healthy</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                        <Bot className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm text-gray-600">AI Services</span>
-                                    </div>
-                                    <span className="text-sm font-medium text-green-600">Running</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                        <Globe className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm text-gray-600">API Gateway</span>
-                                    </div>
-                                    <span className="text-sm font-medium text-green-600">Stable</span>
-                                </div>
-                            </div>
-                        </div>
+                        
 
                         {/* Navigation */}
                         <div className="bg-white rounded-xl shadow-sm p-6">
                             <nav className="space-y-2">
                                 {[
                                     { id: 'overview', label: 'System Overview', icon: Monitor },
-                                    { id: 'analytics', label: 'AI Analytics', icon: BarChart3 },
-                                    { id: 'requests', label: 'Request Management', icon: FileText },
+                                   
                                     { id: 'resources', label: 'Resource Allocation', icon: Package },
                                     { id: 'users', label: 'User Management', icon: Users },
                                     { id: 'communication', label: 'Communication Hub', icon: MessageSquare },
-                                    { id: 'performance', label: 'Performance Monitor', icon: Gauge }
+                                   
                                 ].map((item) => (
                                     <button
                                         key={item.id}
@@ -496,26 +454,7 @@ const GovernmentHelpCentreDashboard = () => {
                                         </div>
                                     </div>
 
-                                    {/* Recent Activities */}
-                                    <div className="bg-white rounded-xl shadow-sm p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
-                                        <div className="space-y-4">
-                                            {recentActivities.map((activity) => {
-                                                const IconComponent = getActivityIcon(activity.type);
-                                                return (
-                                                    <div key={activity.id} className="flex items-start space-x-3">
-                                                        <div className={`p-2 rounded-lg ${getActivityColor(activity.priority)}`}>
-                                                            <IconComponent className="h-4 w-4" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                                                            <p className="text-xs text-gray-500">{activity.user} • {activity.timestamp}</p>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                                 
                                 </div>
 
                                 {/* Resource Overview */}
@@ -543,138 +482,6 @@ const GovernmentHelpCentreDashboard = () => {
                             </div>
                         )}
 
-                        {/* AI Analytics Tab */}
-                        {activeTab === 'analytics' && (
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">AI Performance Analytics</h2>
-
-                                {/* AI Metrics Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                                    {renderMetricCard('Processing Time', aiMetrics.averageProcessingTime, 'seconds', Timer, 'bg-purple-100 text-purple-600', 15)}
-                                    {renderMetricCard('Request Accuracy', aiMetrics.requestAccuracy, '%', Target, 'bg-green-100 text-green-600', 2)}
-                                    {renderMetricCard('Automation Rate', aiMetrics.automationRate, '%', Bot, 'bg-blue-100 text-blue-600', 5)}
-                                    {renderMetricCard('API Success Rate', aiMetrics.successRate, '%', CheckCircle, 'bg-emerald-100 text-emerald-600', 1)}
-                                </div>
-
-                                {/* AI Models Status */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                    <div className="bg-white rounded-xl shadow-sm p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Models Performance</h3>
-                                        <div className="space-y-4">
-                                            {[
-                                                { name: 'Request Classification Model', accuracy: 96.4, status: 'Optimal' },
-                                                { name: 'Priority Assignment Model', accuracy: 94.2, status: 'Good' },
-                                                { name: 'Resource Allocation Model', accuracy: 89.7, status: 'Fair' },
-                                                { name: 'Vision Analysis Model', accuracy: 91.3, status: 'Good' },
-                                                { name: 'Natural Language Processing', accuracy: 93.8, status: 'Good' }
-                                            ].map((model, index) => (
-                                                <div key={index} className="flex items-center justify-between">
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-900">{model.name}</p>
-                                                        <p className="text-xs text-gray-500">Accuracy: {model.accuracy}%</p>
-                                                    </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${model.status === 'Optimal' ? 'bg-green-100 text-green-800' :
-                                                        model.status === 'Good' ? 'bg-blue-100 text-blue-800' :
-                                                            'bg-yellow-100 text-yellow-800'
-                                                        }`}>
-                                                        {model.status}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl shadow-sm p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Cost Analysis</h3>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">Cost per Request</span>
-                                                <span className="font-semibold text-gray-900">${aiMetrics.costPerRequest}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">Daily API Calls</span>
-                                                <span className="font-semibold text-gray-900">{aiMetrics.apiCalls24h.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">Active Models</span>
-                                                <span className="font-semibold text-gray-900">{aiMetrics.modelsDeployed}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">Error Rate</span>
-                                                <span className="font-semibold text-red-600">{aiMetrics.errorRate}%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Response Time Chart Placeholder */}
-                                <div className="bg-white rounded-xl shadow-sm p-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Response Time Trends</h3>
-                                    <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <div className="text-center">
-                                            <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                            <p className="text-gray-600">Response time analytics chart would be displayed here</p>
-                                            <p className="text-sm text-gray-500">Integration with charting library required</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'requests' && (
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Request Management Center</h2>
-
-                                {/* Request Statistics */}
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                                    {renderMetricCard('Total Requests', systemMetrics.totalRequests, 'requests', FileText, 'bg-blue-100 text-blue-600')}
-                                    {renderMetricCard('Pending', systemMetrics.pendingRequests, 'requests', Clock, 'bg-yellow-100 text-yellow-600')}
-                                    {renderMetricCard('In Progress', systemMetrics.assignedRequests, 'requests', RefreshCw, 'bg-orange-100 text-orange-600')}
-                                    {renderMetricCard('Completed', systemMetrics.completedRequests, 'requests', CheckCircle, 'bg-green-100 text-green-600')}
-                                </div>
-
-                                {/* Request Fulfillment Metrics */}
-                                <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Fulfillment Efficiency Metrics</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="text-center">
-                                            <div className="text-3xl font-bold text-green-600 mb-2">{systemMetrics.requestFulfillmentRate}%</div>
-                                            <p className="text-sm text-gray-600">Overall Fulfillment Rate</p>
-                                            <p className="text-xs text-gray-500">Target: 95%</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <div className="text-3xl font-bold text-blue-600 mb-2">{systemMetrics.averageResponseTime}</div>
-                                            <p className="text-sm text-gray-600">Avg Response Time (min)</p>
-                                            <p className="text-xs text-gray-500">Target: &lt; 5 min</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <div className="text-3xl font-bold text-purple-600 mb-2">97.2%</div>
-                                            <p className="text-sm text-gray-600">First Contact Resolution</p>
-                                            <p className="text-xs text-gray-500">Target: 90%</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Active Request Types */}
-                                <div className="bg-white rounded-xl shadow-sm p-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Request Distribution by Type</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {[
-                                            { type: 'Food & Water', count: 892, icon: '🍽️', color: 'bg-orange-100' },
-                                            { type: 'Medical Aid', count: 234, icon: '🏥', color: 'bg-red-100' },
-                                            { type: 'Shelter', count: 567, icon: '🏠', color: 'bg-blue-100' },
-                                            { type: 'Evacuation', count: 123, icon: '🚁', color: 'bg-purple-100' }
-                                        ].map((item, index) => (
-                                            <div key={index} className={`${item.color} rounded-lg p-4 text-center`}>
-                                                <div className="text-2xl mb-2">{item.icon}</div>
-                                                <div className="text-xl font-bold text-gray-900">{item.count}</div>
-                                                <div className="text-sm text-gray-600">{item.type}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Resource Allocation Tab */}
                         {activeTab === 'resources' && (
