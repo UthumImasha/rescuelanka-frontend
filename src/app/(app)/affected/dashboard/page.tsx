@@ -64,6 +64,7 @@ import Communication from './Communication';
 import AvailableResources from './AvailableResources';
 import UserProfile from './UserProfile';
 import EmergencyCenter from './emergancy';
+import Link from 'next/link';
 const AffectedIndividualDashboard = () => {
     const [activeTab, setActiveTab] = useState('emergency');
     const [helpRequestModal, setHelpRequestModal] = useState(false);
@@ -432,13 +433,13 @@ const AffectedIndividualDashboard = () => {
                         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Actions</h3>
                             <div className="space-y-3">
-                                <button
-                                    onClick={() => setHelpRequestModal(true)}
+                                <Link
+                                    href={`/emergency`}
                                     className="w-full flex items-center space-x-3 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
                                 >
                                     <Plus className="h-5 w-5" />
                                     <span>Request Help</span>
-                                </button>
+                                </Link>
 
 
                                 {pendingSync.length > 0 && isOnline && (

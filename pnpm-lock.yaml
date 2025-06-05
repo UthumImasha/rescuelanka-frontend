@@ -14,6 +14,9 @@ importers:
       '@react-google-maps/api':
         specifier: ^2.20.6
         version: 2.20.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@types/yup':
+        specifier: ^0.32.0
+        version: 0.32.0
       firebase:
         specifier: ^11.8.1
         version: 11.8.1
@@ -1438,6 +1441,10 @@ packages:
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
+  '@types/yup@0.32.0':
+    resolution: {integrity: sha512-Gr2lllWTDxGVYHgWfL8szjdedERpNgm44L9BDL2cmcHG7Bfd6taEpiW3ayMFLaYvlJr/6bFXDJdh6L406AGlFg==}
+    deprecated: This is a stub types definition. yup provides its own type definitions, so you do not need this installed.
 
   '@typescript-eslint/eslint-plugin@8.33.0':
     resolution: {integrity: sha512-CACyQuqSHt7ma3Ns601xykeBK/rDeZa3w6IS6UtMQbixO5DWy+8TilKkviGDH6jtWCo8FGRKEK5cLLkPvEammQ==}
@@ -5434,6 +5441,10 @@ snapshots:
   '@types/ws@8.18.1':
     dependencies:
       '@types/node': 20.17.51
+
+  '@types/yup@0.32.0':
+    dependencies:
+      yup: 1.6.1
 
   '@typescript-eslint/eslint-plugin@8.33.0(@typescript-eslint/parser@8.33.0(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3))(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3)':
     dependencies:

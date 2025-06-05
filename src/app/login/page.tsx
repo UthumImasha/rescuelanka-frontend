@@ -2,19 +2,11 @@
 
 import React, { useState } from 'react';
 import {
-    Shield,
-    Eye,
-    EyeOff,
-    Mail,
-    Lock,
-    ArrowRight,
-    AlertCircle,
-    Users,
-    Heart,
-    Globe
+    Shield, Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, Users, Heart, Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -25,6 +17,8 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [loginError, setLoginError] = useState('');
+    const router = useRouter();
 
     const userTypes = [
         { value: 'first-responder', label: 'First Responder', icon: Shield, color: 'text-red-600' },
@@ -49,35 +43,76 @@ const LoginPage = () => {
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
-
         if (!formData.email) {
             newErrors.email = 'Email is required';
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = 'Email is invalid';
         }
-
         if (!formData.password) {
             newErrors.password = 'Password is required';
         } else if (formData.password.length < 6) {
             newErrors.password = 'Password must be at least 6 characters';
         }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
+    const LOGIN_MUTATION = `
+        mutation loginUser($email: String!, $password: String!) {
+            loginUser(email: $email, password: $password) {
+                accessToken
+                tokenType
+                user {
+                    role
+                }
+            }
+        }
+    `;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setLoginError('');
         if (!validateForm()) return;
-
         setIsLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            console.log('Login attempt:', formData);
+            const response = await fetch(GRAPHQL_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: LOGIN_MUTATION,
+                    variables: {
+                        email: formData.email,
+                        password: formData.password
+                    }
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.errors) {
+                setLoginError(result.errors[0]?.message || 'Login failed');
+            } else if (result.data && result.data.loginUser) {
+                const { accessToken, user } = result.data.loginUser;
+                // Store token as needed
+                localStorage.setItem('accessToken', accessToken);
+
+                // Role-based redirect
+                if (user && user.role === 'affected-individual') {
+                    router.push('/affected/dashboard');
+                } else if (user && user.role === 'government') {
+                    router.push('/dashboard');
+                } else {
+                    // Default dashboard for other roles
+                    router.push('/dashboard');
+                }
+            } else {
+                setLoginError('Invalid credentials');
+            }
         } catch (error) {
-            console.error('Login error:', error);
+            setLoginError('Network error. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -100,9 +135,6 @@ const LoginPage = () => {
                     <h2 className="text-3xl font-monos font-semibold text-gray-900 mb-2">Welcome back</h2>
                     <p className="text-gray-600">Sign in to your account to continue helping</p>
                 </div>
-
-
-
                 {/* Login Form */}
                 <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
                     {/* Email Field */}
@@ -137,7 +169,6 @@ const LoginPage = () => {
                             </p>
                         )}
                     </div>
-
                     {/* Password Field */}
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
@@ -176,7 +207,12 @@ const LoginPage = () => {
                             </p>
                         )}
                     </div>
-
+                    {/* Error Message */}
+                    {loginError && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+                            {loginError}
+                        </div>
+                    )}
                     {/* Remember Me & Forgot Password */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -194,7 +230,6 @@ const LoginPage = () => {
                             Forgot password?
                         </Link>
                     </div>
-
                     {/* Submit Button */}
                     <button
                         type="submit"
@@ -214,7 +249,6 @@ const LoginPage = () => {
                         )}
                     </button>
                 </form>
-
                 {/* Emergency Access */}
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                     <div className="flex items-center">
@@ -230,7 +264,6 @@ const LoginPage = () => {
                         </div>
                     </div>
                 </div>
-
                 {/* Sign Up Link */}
                 <div className="text-center">
                     <p className="text-gray-600">
@@ -240,7 +273,6 @@ const LoginPage = () => {
                         </Link>
                     </p>
                 </div>
-
                 {/* Footer */}
                 <div className="text-center text-xs text-gray-500">
                     <p>By signing in, you agree to our Terms of Service and Privacy Policy</p>
