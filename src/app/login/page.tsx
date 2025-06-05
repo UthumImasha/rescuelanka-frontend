@@ -1,25 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Import useEffect
 import {
     Shield, Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, Users, Heart, Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+
 import { useRouter } from 'next/navigation';
+import { saveToken } from '@/utils/auth';
+import { useLoginUserMutation } from "@/lib/generated/graphql";
+import { useFormik } from 'formik'; // Import useFormik
+import * as Yup from 'yup'; // Import Yup
+
 
 const LoginPage = () => {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-        userType: 'first-responder'
-    });
     const [showPassword, setShowPassword] = useState(false);
+
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [loginError, setLoginError] = useState('');
     const router = useRouter();
 
+    // Destructure `loading` as `isLoading` and `error` as `apolloMutationError`
+    const [loginUser, { loading: isLoading, error: apolloMutationError }] = useLoginUserMutation();
+
+    // Note: The `userType` is part of your UI but not sent in the `loginUser` mutation variables.
+    // If your backend needs this for login, you'd need to update your GraphQL schema and mutation.
     const userTypes = [
         { value: 'first-responder', label: 'First Responder', icon: Shield, color: 'text-red-600' },
         { value: 'volunteer', label: 'Volunteer', icon: Heart, color: 'text-blue-600' },
@@ -27,98 +34,87 @@ const LoginPage = () => {
         { value: 'government', label: 'Government', icon: Globe, color: 'text-purple-600' }
     ];
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        if (errors[name]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: ''
-            }));
-        }
-    };
+    // Yup Validation Schema for the Login Form
+    const validationSchema = Yup.object({
+        email: Yup.string().trim().email('Invalid email address').required('Email is required'),
+        password: Yup.string().required('Password is required').min(6, 'Password must be at least 6 characters'),
+        userType: Yup.string().oneOf(userTypes.map(type => type.value)).required('User type is required'), // Client-side validation for userType
+    });
 
-    const validateForm = () => {
-        const newErrors: { [key: string]: string } = {};
-        if (!formData.email) {
-            newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid';
-        }
-        if (!formData.password) {
-            newErrors.password = 'Password is required';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+    const formik = useFormik({
+        initialValues: {
+            email: '',
+            password: '',
+            userType: 'first-responder' // Default value matching your state
+        },
+        validationSchema: validationSchema,
+        onSubmit: async (values) => {
+            // Clear any previous Formik errors, including server-side ones
+            formik.setErrors({});
+            formik.setFieldError('submit', undefined);
 
-    const LOGIN_MUTATION = `
-        mutation loginUser($email: String!, $password: String!) {
-            loginUser(email: $email, password: $password) {
-                accessToken
-                tokenType
-                user {
-                    role
-                }
-            }
-        }
-    `;
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoginError('');
-        if (!validateForm()) return;
-        setIsLoading(true);
-
-        try {
-            const response = await fetch(GRAPHQL_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    query: LOGIN_MUTATION,
+            try {
+                const { data } = await loginUser({
                     variables: {
-                        email: formData.email,
-                        password: formData.password
+                        email: values.email,
+                        password: values.password,
                     }
-                }),
-            });
+                });
 
-            const result = await response.json();
-
-            if (result.errors) {
-                setLoginError(result.errors[0]?.message || 'Login failed');
-            } else if (result.data && result.data.loginUser) {
-                const { accessToken, user } = result.data.loginUser;
-                // Store token as needed
-                localStorage.setItem('accessToken', accessToken);
-
-                // Role-based redirect
-                if (user && user.role === 'affected-individual') {
-                    router.push('/affected/dashboard');
-                } else if (user && user.role === 'government') {
-                    router.push('/dashboard');
-                } else {
-                    // Default dashboard for other roles
-                    router.push('/dashboard');
+                const token = data?.loginUser?.accessToken; // adjust based on your actual login response
+                if (token) {
+                    saveToken(token);
+                    console.log('Login successful');
+                    // router.push('/dashboard'); // or wherever
                 }
-            } else {
-                setLoginError('Invalid credentials');
-            }
-        } catch (error) {
-            setLoginError('Network error. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
-    const selectedUserType = userTypes.find(type => type.value === formData.userType);
+                formik.resetForm();
+
+            } catch (error) {
+                // This catch block will only execute for network errors or unhandled Apollo client errors.
+                // GraphQL errors in the 'errors' array (like validation errors) are handled by Apollo's `error` state (apolloMutationError).
+                console.error('Login failed due to an unexpected error:', error);
+                formik.setFieldError('submit', 'An unexpected error occurred during login. Please try again.');
+            }
+        },
+    });
+
+    // useEffect to handle server-side (GraphQL) errors and map them to Formik's errors
+    useEffect(() => {
+        if (apolloMutationError) {
+            // Clear all current Formik field errors and generic submit error
+            formik.setErrors({});
+            formik.setFieldError('submit', undefined);
+
+            if (apolloMutationError.graphQLErrors && apolloMutationError.graphQLErrors.length > 0) {
+                apolloMutationError.graphQLErrors.forEach(graphQLError => {
+                    // This assumes server validation errors are returned in `extensions`
+                    // with keys matching your form field names (e.g., `email`, `password`)
+                    if (graphQLError.extensions) {
+                        const extensions = graphQLError.extensions as Record<string, string>;
+                        let mappedToField = false;
+                        for (const fieldName in extensions) {
+                            if (Object.prototype.hasOwnProperty.call(extensions, fieldName) && formik.values.hasOwnProperty(fieldName)) {
+                                formik.setFieldError(fieldName, extensions[fieldName]);
+                                formik.setFieldTouched(fieldName, true, false); // Mark field as touched
+                                mappedToField = true;
+                            }
+                        }
+                        // If no specific field was matched, display a generic message
+                        if (!mappedToField && graphQLError.message) {
+                            formik.setFieldError('submit', graphQLError.message);
+                        }
+                    } else {
+                        // If no extensions or extensions don't match fields, use the main error message
+                        formik.setFieldError('submit', graphQLError.message || 'An unknown error occurred from the server.');
+                    }
+                });
+            } else {
+                // For non-GraphQL errors (e.g., network errors, parsing errors)
+                formik.setFieldError('submit', apolloMutationError.message || 'An unexpected network error occurred.');
+            }
+        }
+    }, [apolloMutationError]); // Dependency array: runs when apolloMutationError changes
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -128,15 +124,16 @@ const LoginPage = () => {
                     <Link href="/" className="inline-flex items-center space-x-2 mb-6 hover:opacity-80 transition-opacity">
                         <div className="flex items-center space-x-2">
                             <Image src="/logo.png" alt="Rescue Lanka Logo"
-                                width={200} height={100}
+                                   width={200} height={100}
                             />
                         </div>
                     </Link>
                     <h2 className="text-3xl font-monos font-semibold text-gray-900 mb-2">Welcome back</h2>
                     <p className="text-gray-600">Sign in to your account to continue helping</p>
                 </div>
+
                 {/* Login Form */}
-                <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
+                <form onSubmit={formik.handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
                     {/* Email Field */}
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -150,22 +147,19 @@ const LoginPage = () => {
                                 id="email"
                                 name="email"
                                 type="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className={`block w-full pl-10 pr-3 py-3  text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.email ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                value={formik.values.email}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur} // Add onBlur for immediate validation feedback
+                                className={`block w-full pl-10 pr-3 py-3  text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.email && formik.errors.email ? 'border-red-300' : 'border-gray-300'
+                                }`}
                                 placeholder="Enter your email"
                             />
-                            {errors.email && (
-                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <AlertCircle className="h-5 w-5 text-red-500" />
-                                </div>
-                            )}
+                            {/* Removed AlertCircle inside input div for cleaner error display below */}
                         </div>
-                        {errors.email && (
+                        {formik.touched.email && formik.errors.email && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.email}
+                                {formik.errors.email}
                             </p>
                         )}
                     </div>
@@ -182,10 +176,11 @@ const LoginPage = () => {
                                 id="password"
                                 name="password"
                                 type={showPassword ? 'text' : 'password'}
-                                value={formData.password}
-                                onChange={handleInputChange}
-                                className={`block w-full pl-10 pr-10 py-3 text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.password ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                value={formik.values.password}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur} // Add onBlur
+                                className={`block w-full pl-10 pr-10 py-3 text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.password && formik.errors.password ? 'border-red-300' : 'border-gray-300'
+                                }`}
                                 placeholder="Enter your password"
                             />
                             <button
@@ -200,10 +195,43 @@ const LoginPage = () => {
                                 )}
                             </button>
                         </div>
-                        {errors.password && (
+                        {formik.touched.password && formik.errors.password && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.password}
+                                {formik.errors.password}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* User Type Selection (Optional for backend login, but part of UI) */}
+                    <div>
+                        <label htmlFor="userType" className="block text-sm font-medium text-gray-700 mb-1">
+                            Sign in as
+                        </label>
+                        <div className="relative">
+                            {/*<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">*/}
+                            {/*    {selectedUserType?.icon && React.createElement(selectedUserType.icon, {*/}
+                            {/*        className: `h-5 w-5 ${selectedUserType.color}`*/}
+                            {/*    })}*/}
+                            {/*</div>*/}
+                            <select
+                                id="userType"
+                                name="userType"
+                                value={formik.values.userType}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.userType && formik.errors.userType ? 'border-red-300' : 'border-gray-300'
+                                }`}
+                            >
+                                {userTypes.map((type) => (
+                                    <option key={type.value} value={type.value}>{type.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {formik.touched.userType && formik.errors.userType && (
+                            <p className="mt-1 text-sm text-red-600 flex items-center">
+                                <AlertCircle className="h-4 w-4 mr-1" />
+                                {formik.errors.userType}
                             </p>
                         )}
                     </div>
@@ -221,6 +249,8 @@ const LoginPage = () => {
                                 name="remember-me"
                                 type="checkbox"
                                 className="h-4 w-4 text-red-600 focus:ring-red-600 border-gray-300 rounded"
+                                // Formik doesn't manage this if it's not in initialValues/schema
+                                // If you want to manage it with Formik, add it to initialValues and schema
                             />
                             <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                                 Remember me
@@ -248,6 +278,14 @@ const LoginPage = () => {
                             </div>
                         )}
                     </button>
+
+                    {/* General Formik Error / Apollo Generic Error */}
+                    {formik.errors.submit && (
+                        <div className="text-red-600 flex items-center justify-center text-sm">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            {formik.errors.submit}
+                        </div>
+                    )}
                 </form>
                 {/* Emergency Access */}
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">

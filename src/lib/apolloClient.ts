@@ -1,26 +1,35 @@
 'use client';
 
-import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/client';
+import {
+    ApolloClient,
+    InMemoryCache,
+    HttpLink,
+    ApolloLink,
+} from '@apollo/client';
+import {getToken} from "@/utils/auth";
 
+// GraphQL endpoint
 const httpLink = new HttpLink({
-    uri: 'https://intellihack5-backend-27mgf.ondigitalocean.app/disaster-management-codelabs-ba2/graphql',
+    uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'https://intellihack5-backend-27mgf.ondigitalocean.app/disaster-management-codelabs-ba2/graphql',
 });
 
+// Auth middleware
 const authLink = new ApolloLink((operation, forward) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = getToken();
 
-    operation.setContext({
+    operation.setContext(({ headers = {} }) => ({
         headers: {
-            authorization: token ? `Bearer ${token}` : '',
+            ...headers,
+            Authorization: token ? `Bearer ${token}` : '',
         },
-    });
+    }));
 
     return forward(operation);
 });
 
-
+// Apollo Client
 const client = new ApolloClient({
-    link: authLink.concat(httpLink),
+    link: ApolloLink.from([authLink, httpLink]),
     cache: new InMemoryCache(),
 });
 
