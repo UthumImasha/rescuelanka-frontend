@@ -59,6 +59,7 @@ import {
     PhoneCall
 } from 'lucide-react';
 import RequestHelp from './requestGelp';
+
 const AffectedIndividualDashboard = () => {
     const [activeTab, setActiveTab] = useState('emergency');
     const [helpRequestModal, setHelpRequestModal] = useState(false);
