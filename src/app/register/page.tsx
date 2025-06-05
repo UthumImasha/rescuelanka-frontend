@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react'; // Import useEffect
 import {
     AlertCircle,
     Award,
@@ -21,26 +21,16 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRegisterUserMutation, UserRoleType } from "@/lib/generated/graphql";
+import {useFormik} from 'formik';
+import * as Yup from 'yup';
 
 const RegisterPage = () => {
-    const [formData, setFormData] = useState({
-        fullName: '',
-        phone: '',
-        location: '',
-        address: '',
-        role: '',
-        email: '',
-        skills: '',
-        password: '',
-        agreeToTerms: false
-    });
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [locationLoading, setLocationLoading] = useState(false);
-    const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState(false);
 
-    const [registerUser] = useRegisterUserMutation();
+    // Destructure `loading` as `isLoading` and `error` as `apolloMutationError`
+    const [registerUser, {loading: isLoading, error: apolloMutationError}] = useRegisterUserMutation();
 
     const roles = [
         {
@@ -98,12 +88,134 @@ const RegisterPage = () => {
         ]
     };
 
+    const validationSchema = Yup.object({
+        fullName: Yup.string().trim().required('Full name is required'),
+        phone: Yup.string().trim()
+            .required('Phone number is required')
+            .matches(/^\+?[0-9]{7,15}$/, 'Invalid phone number format'),
+        location: Yup.string().trim()
+            .required('Location is required')
+            .matches(/^-?\d+\.?\d*,\s*-?\d+\.?\d*$/, 'Location must be "latitude, longitude" format'),
+        address: Yup.string().trim().required('Address is required'),
+        role: Yup.string().required('Please select a role'),
+        email: Yup.string().trim().email('Invalid email address').required('Email is required')
+            .when('role', {
+                is: 'government',
+                then: (schema) => schema.matches(/@.+\.gov$/, 'Government officials must use a .gov email address'),
+            }),
+        skills: Yup.string().when('role', {
+            is: (role: string) => ['volunteer', 'first-responder'].includes(role),
+            then: (schema) => schema.trim().required('Please select your skills/specialization'),
+            otherwise: (schema) => schema.notRequired(),
+        }),
+        password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+        agreeToTerms: Yup.boolean().oneOf([true], 'You must agree to the terms and conditions'),
+    });
+
+    const formik = useFormik({
+        initialValues: {
+            fullName: '',
+            phone: '',
+            location: '',
+            address: '',
+            role: '',
+            email: '',
+            skills: '',
+            password: '',
+            agreeToTerms: false
+        },
+        validationSchema: validationSchema,
+        onSubmit: async (values) => {
+            setSuccess(false); // Reset success state on new submission attempt
+            formik.setErrors({}); // Clear previous Formik errors
+            formik.setFieldError('submit', undefined); // Clear generic submit error
+
+            try {
+                const [latStr, lonStr] = values.location.split(',').map(s => s.trim());
+                const residentLatitude = parseFloat(latStr);
+                const residentLongitude = parseFloat(lonStr);
+
+                if (isNaN(residentLatitude) || isNaN(residentLongitude)) {
+                    formik.setFieldError('location', 'Invalid latitude or longitude in location field.');
+                    return;
+                }
+
+                // Correct mapping for the GraphQL UserRoleType enum
+                const userRole = UserRoleType.User; // As per your requirement
+
+                const userSkills = values.skills ? [values.skills] : [];
+
+                await registerUser({
+                    variables: {
+                        userData: {
+                            name: values.fullName,
+                            role: userRole,
+                            email: values.email,
+                            phone: values.phone,
+                            residentLatitude: residentLatitude,
+                            residentLongitude: residentLongitude,
+                            residentAddress: values.address,
+                            isActive: true,
+                            skills: userSkills,
+                            password: values.password,
+                        }
+                    }
+                });
+                setSuccess(true);
+                formik.resetForm();
+            } catch (error) {
+                // This catch block will only execute for network errors or unhandled Apollo client errors.
+                console.error("Submission failed due to an unexpected error:", error);
+                formik.setFieldError('submit', 'An unexpected error occurred during submission. Please try again.');
+            }
+        },
+    });
+
+    // useEffect to handle server-side (GraphQL) errors
+    useEffect(() => {
+        if (apolloMutationError) {
+            setSuccess(false); // If there's an error, registration wasn't successful
+
+            formik.setErrors({}); // Clear all previous Formik field errors
+            formik.setFieldError('submit', undefined); // Clear previous generic submit error
+
+            if (apolloMutationError.graphQLErrors && apolloMutationError.graphQLErrors.length > 0) {
+                apolloMutationError.graphQLErrors.forEach(graphQLError => {
+                    // Check for errors in the 'extensions' field, which is common for custom validation errors
+                    if (graphQLError.extensions) {
+                        const extensions = graphQLError.extensions as Record<string, string>;
+                        for (const fieldName in extensions) {
+                            if (Object.prototype.hasOwnProperty.call(extensions, fieldName)) {
+                                // If the extension key matches a form field name
+                                if (formik.values.hasOwnProperty(fieldName)) { // Ensure it's a field in the form
+                                    formik.setFieldError(fieldName, extensions[fieldName]);
+                                    formik.setFieldTouched(fieldName, true, false); // Mark as touched so error displays
+                                } else {
+                                    // If the error is not for a specific form field, display it as a generic submit error
+                                    formik.setFieldError('submit', extensions[fieldName]);
+                                }
+                            }
+                        }
+                    } else {
+                        // If no specific extensions are found, or if message is general
+                        formik.setFieldError('submit', graphQLError.message || 'An unknown error occurred from the server.');
+                    }
+                });
+            } else {
+                // If there are no graphQLErrors, it might be a network error or other Apollo error
+                formik.setFieldError('submit', apolloMutationError.message || 'An unexpected error occurred.');
+            }
+        }
+    }, [apolloMutationError]); // This effect runs whenever apolloMutationError changes
+
     // Auto-detect location using browser geolocation
     const detectLocation = async () => {
         setLocationLoading(true);
+        formik.setFieldTouched('location', true);
+        formik.setFieldError('location', '');
 
         if (!navigator.geolocation) {
-            setErrors(prev => ({ ...prev, location: 'Geolocation is not supported by this browser' }));
+            formik.setFieldError('location', 'Geolocation is not supported by this browser');
             setLocationLoading(false);
             return;
         }
@@ -115,17 +227,12 @@ const RegisterPage = () => {
                     const mockLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
                     const mockAddress = "Detected Location (Mock Address)";
 
-                    setFormData(prev => ({
-                        ...prev,
-                        location: mockLocation,
-                        address: mockAddress
-                    }));
+                    formik.setFieldValue('location', mockLocation);
+                    formik.setFieldValue('address', mockAddress);
+                    formik.setFieldError('location', '');
 
-                    if (errors.location) {
-                        setErrors(prev => ({ ...prev, location: '' }));
-                    }
                 } catch (error) {
-                    setErrors(prev => ({ ...prev, location: 'Failed to get location details' }));
+                    formik.setFieldError('location', 'Failed to get location details');
                 }
                 setLocationLoading(false);
             },
@@ -142,145 +249,21 @@ const RegisterPage = () => {
                         errorMessage = 'Location request timed out';
                         break;
                 }
-                setErrors(prev => ({ ...prev, location: errorMessage }));
+                formik.setFieldError('location', errorMessage);
                 setLocationLoading(false);
             }
         );
     };
 
-    const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
-
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
-        }
-
-        if (name === 'role' && !['volunteer', 'first-responder'].includes(value)) {
-            setFormData(prev => ({ ...prev, skills: '' }));
+    const handleRoleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        formik.handleChange(e);
+        formik.setFieldTouched('role', true, false);
+        const newRole = e.target.value;
+        if (!['volunteer', 'first-responder'].includes(newRole)) {
+            formik.setFieldValue('skills', '');
         }
     };
 
-    const validateForm = () => {
-        const newErrors = {};
-
-        if (!formData.fullName.trim()) {
-            newErrors.fullName = 'Full name is required';
-        }
-
-        if (!formData.phone.trim()) {
-            newErrors.phone = 'Phone number is required';
-        }
-
-        if (!formData.location.trim()) {
-            newErrors.location = 'Location is required';
-        }
-
-        if (!formData.address.trim()) {
-            newErrors.address = 'Address is required';
-        }
-
-        if (!formData.role) {
-            newErrors.role = 'Please select a role';
-        }
-
-        if (!formData.email.trim()) {
-            newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid';
-        } else if (formData.role === 'government' && !formData.email.endsWith('.gov')) {
-            newErrors.email = 'Government officials must use a .gov email address';
-        }
-
-        if (['volunteer', 'first-responder'].includes(formData.role) && !formData.skills.trim()) {
-            newErrors.skills = 'Please select your skills/specialization';
-        }
-
-        if (!formData.password) {
-            newErrors.password = 'Password is required';
-        } else if (formData.password.length < 8) {
-            newErrors.password = 'Password must be at least 8 characters';
-        }
-
-        if (!formData.agreeToTerms) {
-            newErrors.agreeToTerms = 'You must agree to the terms and conditions';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    // Helper to map string role to UserRoleType enum
-    const getUserRoleType = (role) => {
-        switch (role) {
-            case 'affected-individual':
-                return UserRoleType.AffectedIndividual;
-            case 'volunteer':
-                return UserRoleType.Volunteer;
-            case 'first-responder':
-                return UserRoleType.FirstResponder;
-            case 'government':
-                return UserRoleType.Government;
-            default:
-                return undefined;
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validateForm()) return;
-
-        setIsLoading(true);
-        setSuccess(false);
-
-        try {
-            let latitude = null, longitude = null;
-            if (formData.location) {
-                const locParts = formData.location.split(',').map(s => parseFloat(s.trim()));
-                if (locParts.length === 2 && !isNaN(locParts[0]) && !isNaN(locParts[1])) {
-                    latitude = locParts[0];
-                    longitude = locParts[1];
-                }
-            }
-
-            await registerUser({
-                variables: {
-                    userData: {
-                        name: formData.fullName,
-                        role: getUserRoleType(formData.role),
-                        email: formData.email,
-                        phone: formData.phone,
-                        residentLatitude: latitude,
-                        residentLongitude: longitude,
-                        residentAddress: formData.address,
-                        isActive: true,
-                        skills: formData.skills ? [formData.skills] : [],
-                        password: formData.password,
-                    }
-                }
-            });
-
-            setSuccess(true);
-            setFormData({
-                fullName: '',
-                phone: '',
-                location: '',
-                address: '',
-                role: '',
-                email: '',
-                skills: '',
-                password: '',
-                agreeToTerms: false
-            });
-        } catch (error) {
-            setErrors({ submit: 'Registration failed. Please try again.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -294,7 +277,8 @@ const RegisterPage = () => {
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">Join the Response Team</h2>
                     <p className="text-gray-600">Create your account to start helping your community</p>
                 </div>
-                <form className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6" onSubmit={handleSubmit}>
+
+                <form onSubmit={formik.handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
                     {/* Full Name */}
                     <div>
                         <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -308,17 +292,18 @@ const RegisterPage = () => {
                                 id="fullName"
                                 name="fullName"
                                 type="text"
-                                value={formData.fullName}
-                                onChange={handleInputChange}
-                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.fullName ? 'border-red-300' : 'border-gray-300'
+                                value={formik.values.fullName}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.fullName && formik.errors.fullName ? 'border-red-300' : 'border-gray-300'
                                 }`}
                                 placeholder="Enter your full name"
                             />
                         </div>
-                        {errors.fullName && (
+                        {formik.touched.fullName && formik.errors.fullName && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.fullName}
+                                {formik.errors.fullName}
                             </p>
                         )}
                     </div>
@@ -336,17 +321,18 @@ const RegisterPage = () => {
                                 id="phone"
                                 name="phone"
                                 type="tel"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.phone ? 'border-red-300' : 'border-gray-300'
+                                value={formik.values.phone}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.phone && formik.errors.phone ? 'border-red-300' : 'border-gray-300'
                                 }`}
                                 placeholder="+94 XX XXX XXXX"
                             />
                         </div>
-                        {errors.phone && (
+                        {formik.touched.phone && formik.errors.phone && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.phone}
+                                {formik.errors.phone}
                             </p>
                         )}
                     </div>
@@ -365,9 +351,10 @@ const RegisterPage = () => {
                                     id="location"
                                     name="location"
                                     type="text"
-                                    value={formData.location}
-                                    onChange={handleInputChange}
-                                    className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.location ? 'border-red-300' : 'border-gray-300'
+                                    value={formik.values.location}
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.location && formik.errors.location ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                     placeholder="Latitude, Longitude"
                                     readOnly
@@ -386,10 +373,10 @@ const RegisterPage = () => {
                                 )}
                             </button>
                         </div>
-                        {errors.location && (
+                        {formik.touched.location && formik.errors.location && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.location}
+                                {formik.errors.location}
                             </p>
                         )}
                     </div>
@@ -407,17 +394,18 @@ const RegisterPage = () => {
                                 id="address"
                                 name="address"
                                 type="text"
-                                value={formData.address}
-                                onChange={handleInputChange}
-                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.address ? 'border-red-300' : 'border-gray-300'
+                                value={formik.values.address}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.address && formik.errors.address ? 'border-red-300' : 'border-gray-300'
                                 }`}
                                 placeholder="Enter your full address"
                             />
                         </div>
-                        {errors.address && (
+                        {formik.touched.address && formik.errors.address && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.address}
+                                {formik.errors.address}
                             </p>
                         )}
                     </div>
@@ -434,25 +422,26 @@ const RegisterPage = () => {
                                         type="radio"
                                         name="role"
                                         value={role.value}
-                                        checked={formData.role === role.value}
-                                        onChange={handleInputChange}
+                                        checked={formik.values.role === role.value}
+                                        onChange={handleRoleChange}
+                                        onBlur={formik.handleBlur}
                                         className="sr-only"
                                     />
-                                    <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${formData.role === role.value
+                                    <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${formik.values.role === role.value
                                         ? 'border-red-600 bg-red-50'
                                         : 'border-gray-200 hover:border-gray-300'
                                     }`}>
                                         <div className="flex items-center">
-                                            <role.icon className={`h-5 w-5 mr-3 ${formData.role === role.value ? 'text-red-600' : 'text-gray-400'
+                                            <role.icon className={`h-5 w-5 mr-3 ${formik.values.role === role.value ? 'text-red-600' : 'text-gray-400'
                                             }`} />
                                             <div className="flex-1">
-                                                <h4 className={`font-medium text-sm ${formData.role === role.value ? 'text-red-600' : 'text-gray-900'
+                                                <h4 className={`font-medium text-sm ${formik.values.role === role.value ? 'text-red-600' : 'text-gray-900'
                                                 }`}>
                                                     {role.label}
                                                 </h4>
                                                 <p className="text-xs text-gray-600">{role.description}</p>
                                             </div>
-                                            {formData.role === role.value && (
+                                            {formik.values.role === role.value && (
                                                 <CheckCircle className="h-4 w-4 text-red-600" />
                                             )}
                                         </div>
@@ -460,10 +449,10 @@ const RegisterPage = () => {
                                 </label>
                             ))}
                         </div>
-                        {errors.role && (
+                        {formik.touched.role && formik.errors.role && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.role}
+                                {formik.errors.role}
                             </p>
                         )}
                     </div>
@@ -472,7 +461,7 @@ const RegisterPage = () => {
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                             Email Address *
-                            {formData.role === 'government' && (
+                            {formik.values.role === 'government' && (
                                 <span className="text-xs text-gray-500 ml-1">(must end with .gov)</span>
                             )}
                         </label>
@@ -484,23 +473,24 @@ const RegisterPage = () => {
                                 id="email"
                                 name="email"
                                 type="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.email ? 'border-red-300' : 'border-gray-300'
+                                value={formik.values.email}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.email && formik.errors.email ? 'border-red-300' : 'border-gray-300'
                                 }`}
-                                placeholder={formData.role === 'government' ? 'name@agency.gov' : 'Enter your email'}
+                                placeholder={formik.values.role === 'government' ? 'name@agency.gov' : 'Enter your email'}
                             />
                         </div>
-                        {errors.email && (
+                        {formik.touched.email && formik.errors.email && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.email}
+                                {formik.errors.email}
                             </p>
                         )}
                     </div>
 
                     {/* Skills (for Volunteers and First Responders) */}
-                    {['volunteer', 'first-responder'].includes(formData.role) && (
+                    {['volunteer', 'first-responder'].includes(formik.values.role) && (
                         <div>
                             <label htmlFor="skills" className="block text-sm font-medium text-gray-700 mb-1">
                                 Skills/Specialization *
@@ -512,21 +502,22 @@ const RegisterPage = () => {
                                 <select
                                     id="skills"
                                     name="skills"
-                                    value={formData.skills}
-                                    onChange={handleInputChange}
-                                    className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.skills ? 'border-red-300' : 'border-gray-300'
+                                    value={formik.values.skills}
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.skills && formik.errors.skills ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                 >
                                     <option value="">Select your specialization</option>
-                                    {skillOptions[formData.role]?.map((skill) => (
+                                    {skillOptions[formik.values.role as 'volunteer' | 'first-responder']?.map((skill) => (
                                         <option key={skill} value={skill}>{skill}</option>
                                     ))}
                                 </select>
                             </div>
-                            {errors.skills && (
+                            {formik.touched.skills && formik.errors.skills && (
                                 <p className="mt-1 text-sm text-red-600 flex items-center">
                                     <AlertCircle className="h-4 w-4 mr-1" />
-                                    {errors.skills}
+                                    {formik.errors.skills}
                                 </p>
                             )}
                         </div>
@@ -545,9 +536,10 @@ const RegisterPage = () => {
                                 id="password"
                                 name="password"
                                 type={showPassword ? 'text' : 'password'}
-                                value={formData.password}
-                                onChange={handleInputChange}
-                                className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${errors.password ? 'border-red-300' : 'border-gray-300'
+                                value={formik.values.password}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-colors ${formik.touched.password && formik.errors.password ? 'border-red-300' : 'border-gray-300'
                                 }`}
                                 placeholder="Create a strong password"
                             />
@@ -563,10 +555,10 @@ const RegisterPage = () => {
                                 )}
                             </button>
                         </div>
-                        {errors.password && (
+                        {formik.touched.password && formik.errors.password && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.password}
+                                {formik.errors.password}
                             </p>
                         )}
                         <p className="mt-1 text-sm text-gray-500">
@@ -582,8 +574,9 @@ const RegisterPage = () => {
                                     id="agreeToTerms"
                                     name="agreeToTerms"
                                     type="checkbox"
-                                    checked={formData.agreeToTerms}
-                                    onChange={handleInputChange}
+                                    checked={formik.values.agreeToTerms}
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
                                     className="h-4 w-4 text-red-600 focus:ring-red-600 border-gray-300 rounded"
                                 />
                             </div>
@@ -601,10 +594,10 @@ const RegisterPage = () => {
                                 </label>
                             </div>
                         </div>
-                        {errors.agreeToTerms && (
+                        {formik.touched.agreeToTerms && formik.errors.agreeToTerms && (
                             <p className="mt-1 text-sm text-red-600 flex items-center">
                                 <AlertCircle className="h-4 w-4 mr-1" />
-                                {errors.agreeToTerms}
+                                {formik.errors.agreeToTerms}
                             </p>
                         )}
                     </div>
@@ -631,12 +624,19 @@ const RegisterPage = () => {
                     </div>
 
                     {/* Error/Success Messages */}
-                    {errors.submit && (
+                    {formik.errors.submit && (
                         <div className="text-red-600 flex items-center justify-center">
                             <AlertCircle className="h-5 w-5 mr-2" />
-                            {errors.submit}
+                            {formik.errors.submit}
                         </div>
                     )}
+                    {apolloMutationError && !formik.errors.submit && ( // Fallback for general Apollo errors not mapped
+                        <div className="text-red-600 flex items-center justify-center">
+                            <AlertCircle className="h-5 w-5 mr-2" />
+                            A server error occurred: {apolloMutationError.message}
+                        </div>
+                    )}
+
 
                     {success && (
                         <div className="text-green-600 flex items-center justify-center">
