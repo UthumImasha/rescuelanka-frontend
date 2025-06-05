@@ -59,7 +59,12 @@ import {
     PhoneCall
 } from 'lucide-react';
 import RequestHelp from './requestGelp';
-
+import MyRequests from './myRequest';
+import Communication from './Communication';
+import AvailableResources from './AvailableResources';
+import UserProfile from './UserProfile';
+import EmergencyCenter from './emergancy';
+import Link from 'next/link';
 const AffectedIndividualDashboard = () => {
     const [activeTab, setActiveTab] = useState('emergency');
     const [helpRequestModal, setHelpRequestModal] = useState(false);
@@ -350,14 +355,10 @@ const AffectedIndividualDashboard = () => {
         }, 2000);
     };
 
-    const startVoiceRecording = () => {
-        setIsRecording(true);
-        setTimeout(() => {
-            setIsRecording(false);
-            setRequestText(prev => prev + " [Voice recording: Need immediate food supplies for family of 4, house flooded, no access to kitchen]");
-        }, 3000);
+    const handleRemoveImage = (id) => {
+        setUploadedImages(prev => prev.filter(img => img.id !== id));
+        setAnalysisResults(prev => prev.filter(analysis => analysis.imageId !== id));
     };
-
     const makeEmergencyCall = (number) => {
         window.open(`tel:${number}`, '_self');
     };
@@ -418,16 +419,7 @@ const AffectedIndividualDashboard = () => {
                                 </button>
                             </div>
 
-                            {/* Profile */}
-                            <div className="flex items-center space-x-3">
-                                <div className="bg-blue-100 rounded-full p-2">
-                                    <User className="h-6 w-6 text-blue-600" />
-                                </div>
-                                <div className="hidden md:block">
-                                    <p className="text-sm font-medium text-gray-900">{userProfile.name}</p>
-                                    <p className="text-xs text-gray-500">{userProfile.location}</p>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -441,27 +433,22 @@ const AffectedIndividualDashboard = () => {
                         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Actions</h3>
                             <div className="space-y-3">
-                                <button
-                                    onClick={() => setHelpRequestModal(true)}
+                                <Link
+                                    href={`/emergency`}
                                     className="w-full flex items-center space-x-3 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
                                 >
                                     <Plus className="h-5 w-5" />
                                     <span>Request Help</span>
-                                </button>
-                                <button
-                                    onClick={() => setChatModal(true)}
-                                    className="w-full flex items-center space-x-3 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                                </Link>
+                                <Link
+                                    href={`/vlm-analysis`}
+                                    className="w-full flex items-center space-x-3 px-3 py-2 bg-red-50 text-green-700 rounded-lg hover:bg-red-100 transition-colors"
                                 >
-                                    <Bot className="h-5 w-5" />
-                                    <span>Get Assistance</span>
-                                </button>
-                                <button
-                                    onClick={() => setReportModal(true)}
-                                    className="w-full flex items-center space-x-3 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
-                                >
-                                    <FileText className="h-5 w-5" />
-                                    <span>Report Situation</span>
-                                </button>
+                                    <Plus className="h-5 w-5" />
+                                    <span>Request Help Image</span>
+                                </Link>
+
+
                                 {pendingSync.length > 0 && isOnline && (
                                     <button
                                         onClick={syncPendingData}
@@ -474,27 +461,6 @@ const AffectedIndividualDashboard = () => {
                             </div>
                         </div>
 
-                        {/* Emergency Contacts */}
-                        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contacts</h3>
-                            <div className="space-y-3">
-                                {emergencyContacts.map((contact, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => makeEmergencyCall(contact.number)}
-                                        className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            <Phone className="h-4 w-4 text-red-600" />
-                                            <div className="text-left">
-                                                <p className="text-sm font-medium text-gray-900">{contact.name}</p>
-                                                <p className="text-xs text-gray-600">{contact.number}</p>
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
 
                         {/* Navigation */}
                         <div className="bg-white rounded-xl shadow-sm p-6">
@@ -578,197 +544,17 @@ const AffectedIndividualDashboard = () => {
 
                         {/* My Requests Tab */}
                         {activeTab === 'requests' && (
-                            <div>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900">My Help Requests</h2>
-                                    <button
-                                        onClick={() => setHelpRequestModal(true)}
-                                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                        <span>New Request</span>
-                                    </button>
-                                </div>
-
-                                <div className="space-y-6">
-                                    {helpRequests.map((request) => {
-                                        const IconComponent = getRequestTypeIcon(request.type);
-                                        return (
-                                            <div key={request.id} className="bg-white rounded-xl shadow-sm p-6">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="flex items-start space-x-4">
-                                                        <div className={`p-3 rounded-lg ${getRequestTypeColor(request.type)}`}>
-                                                            <IconComponent className="h-6 w-6" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center space-x-3 mb-2">
-                                                                <h3 className="text-lg font-semibold text-gray-900">Request #{request.id}</h3>
-                                                                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(request.status)}`}>
-                                                                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                                                                </span>
-                                                                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(request.priority)}`}>
-                                                                    {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)} Priority
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-gray-600 mb-3">{request.description}</p>
-                                                            <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                                                <div className="flex items-center space-x-1">
-                                                                    <Clock className="h-4 w-4" />
-                                                                    <span>{request.timestamp}</span>
-                                                                </div>
-                                                                <div className="flex items-center space-x-1">
-                                                                    <MapPin className="h-4 w-4" />
-                                                                    <span>{request.location}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {request.status === 'assigned' && (
-                                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                                                        <div className="flex items-center space-x-3">
-                                                            <CheckCircle className="h-5 w-5 text-blue-600" />
-                                                            <div>
-                                                                <p className="font-medium text-blue-900">Assigned to: {request.assignedTo}</p>
-                                                                <p className="text-sm text-blue-700">Estimated arrival: {request.estimatedArrival}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {request.status === 'completed' && (
-                                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                                                        <div className="flex items-center space-x-3">
-                                                            <CheckCheck className="h-5 w-5 text-green-600" />
-                                                            <p className="font-medium text-green-900">Request completed successfully</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                            <MyRequests
+                                helpRequests={helpRequests}
+                                onNewRequest={() => setHelpRequestModal(true)}
+                            />
                         )}
 
                         {/* Communication Tab */}
-                        {activeTab === 'communication' && (
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Communication Hub</h2>
-                                <div className="bg-white rounded-xl shadow-sm">
-                                    <div className="p-6 border-b border-gray-200">
-                                        <h3 className="text-lg font-semibold text-gray-900">Live Updates & Support</h3>
-                                    </div>
-                                    <div className="h-96 overflow-y-auto p-6">
-                                        <div className="space-y-4">
-                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                                <div className="flex items-start space-x-3">
-                                                    <div className="bg-blue-100 rounded-full p-2">
-                                                        <MessageCircle className="h-4 w-4 text-blue-600" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className="font-medium text-blue-900">Emergency Coordinator</span>
-                                                            <span className="text-xs text-blue-600">10:45 AM</span>
-                                                        </div>
-                                                        <p className="text-blue-800 mt-1">Food distribution center now open at Community Hall. Please bring ID for verification.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                                <div className="flex items-start space-x-3">
-                                                    <div className="bg-green-100 rounded-full p-2">
-                                                        <MessageCircle className="h-4 w-4 text-green-600" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className="font-medium text-green-900">Medical Team</span>
-                                                            <span className="text-xs text-green-600">10:30 AM</span>
-                                                        </div>
-                                                        <p className="text-green-800 mt-1">Mobile medical unit is en route to Wellawatte area. ETA 15 minutes.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 border-t border-gray-200">
-                                        <div className="flex space-x-3">
-                                            <input
-                                                type="text"
-                                                placeholder="Ask for help or report your situation..."
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                                onKeyPress={(e) => {
-                                                    if (e.key === 'Enter' && e.target.value.trim()) {
-                                                        console.log('Sending message:', e.target.value);
-                                                        e.target.value = '';
-                                                    }
-                                                }}
-                                            />
-                                            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                                <Send className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        {activeTab === 'communication' && <Communication />}
 
                         {/* Resources Tab */}
-                        {activeTab === 'resources' && (
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Resources & Locations</h2>
-                                <div className="grid gap-6">
-                                    <div className="bg-white rounded-xl shadow-sm p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Shelters</h3>
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                                                <div>
-                                                    <p className="font-medium text-blue-900">Community Center Hall</p>
-                                                    <p className="text-sm text-blue-700">Galle Road, Wellawatte • 500m away</p>
-                                                </div>
-                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Available</span>
-                                            </div>
-                                            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                                                <div>
-                                                    <p className="font-medium text-blue-900">School Auditorium</p>
-                                                    <p className="text-sm text-blue-700">Dehiwala Road • 1.2km away</p>
-                                                </div>
-                                                <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">Limited</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl shadow-sm p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Food Distribution Points</h3>
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                                                <div>
-                                                    <p className="font-medium text-orange-900">Red Cross Center</p>
-                                                    <p className="text-sm text-orange-700">Open 9 AM - 6 PM • Hot meals & water</p>
-                                                </div>
-                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Open</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl shadow-sm p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Medical Facilities</h3>
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                                                <div>
-                                                    <p className="font-medium text-red-900">Mobile Medical Unit</p>
-                                                    <p className="text-sm text-red-700">Currently at Community Center</p>
-                                                </div>
-                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Active</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
+                        {activeTab === 'resources' && <AvailableResources />}
                         {/* Profile Tab */}
                         {activeTab === 'profile' && (
                             <div>
@@ -827,7 +613,7 @@ const AffectedIndividualDashboard = () => {
             />
 
             {/* Field Report Modal */}
-            {reportModal && (
+            {/* {reportModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
@@ -872,10 +658,10 @@ const AffectedIndividualDashboard = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* AI Chat Modal */}
-            {chatModal && (
+            {/* {chatModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
@@ -932,7 +718,7 @@ const AffectedIndividualDashboard = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 };

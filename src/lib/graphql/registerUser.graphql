@@ -13,3 +13,173 @@ mutation RegisterUser($userData: UserCreateGQLInput!) {
     skills
   }
 }
+
+mutation CreateReport($reportData: ReportGQLInput!) {
+  createReport(reportData: $reportData) {
+    type
+    userId
+    eventName
+    eventDescription
+    reportAddress
+    reportLatitude
+    reportLongitude
+    startTime
+    isLocationAffected
+    injuriesOrMedicalConditions
+    evacuationRequired
+    electricityAvailable
+    drinkingWaterAvailable
+    drinkingWaterDuration
+    foodAvailable
+    foodDuration
+    animalsPresent
+  }
+}
+
+mutation CreateOrganization($inputData: OrganizationGQLInput!) {
+  createOrganization(inputData: $inputData) {
+    name
+    responsibleEventTypes
+    services
+    timestamp
+  }
+}
+
+mutation UpdateOrganizatoin($inputData: OrganizationGQLInput!) {
+  updateOrganization(inputData: $inputData) {
+    name
+    responsibleEventTypes
+    services
+    timestamp
+  }
+}
+
+mutation DeleteOrganization($organizationId: ID!) {
+  deleteOrganization(organizationId: $organizationId) {
+    id
+    name
+    responsibleEventTypes
+    services
+    timestamp
+  }
+}
+
+mutation CreateOperationalCamp($inputData: OperationalCampGQLInput!) {
+  createOperationalCamp(inputData: $inputData) {
+    name
+    latitude
+    longitude
+    address
+    campTypes
+    personalCount
+    resourceAvailable
+    status
+    timestamp
+  }
+}
+
+mutation UpdateOperationalCamp($inputData: OperationalCampGQLInput!) {
+  updateOperationalCamp(inputData: $inputData) {
+    name
+    latitude
+    longitude
+    address
+    campTypes
+    personalCount
+    resourceAvailable
+    status
+    timestamp
+  }
+}
+
+mutation DeleteOperationalCamp($campId: ID!) {
+  deleteOperationalCamp(campId: $campId) {
+    id
+    name
+    latitude
+    longitude
+    address
+    campTypes
+    personalCount
+    resourceAvailable
+    status
+    timestamp
+  }
+}
+
+mutation CreateRefugeeCamp($inputData: RefugeeCampGQLInput!) {
+  createRefugeeCamp(inputData: $inputData) {
+    id
+    name
+    latitude
+    longitude
+    address
+    capacity
+    currentOccupancy
+    servicesOffered
+    status
+    createdAt
+    lastUpdatedAt
+  }
+}
+
+mutation UpdateRefugeeCamp($inputData: RefugeeCampGQLInput!) {
+  updateRefugeeCamp(inputData: $inputData) {
+    id
+    name
+    latitude
+    longitude
+    address
+    capacity
+    currentOccupancy
+    servicesOffered
+    status
+    createdAt
+    lastUpdatedAt
+  }
+}
+
+mutation DeleteRefugeeCamp($campId: ID!) {
+  deleteRefugeeCamp(campId: $campId) {
+    id
+    name
+    latitude
+    longitude
+    address
+    capacity
+    currentOccupancy
+    servicesOffered
+    status
+    createdAt
+    lastUpdatedAt
+  }
+}
+
+mutation assignUserToOrganization($inputData:UserOrganizationAssignmentInput!) {
+  assignUserToOrganization(inputData: $inputData) {
+    userId
+    orgId
+    orgRole
+    assignedDatetime
+    assignmentEnded
+  }
+}
+
+mutation endOrganizationAssignment($inputData: UserOrganizationAssignmentInput!) {
+  endOrganizationAssignment(inputData: $inputData) {
+    userId
+    orgId
+    orgRole
+    assignedDatetime
+    assignmentEnded
+  }
+}
+
+mutation loginUser($email, $password: TokenGQLPayload!){
+  loginUser(email: $email, password: $password) {
+    accessToken
+    tokenType
+    }
+  }
+}
+

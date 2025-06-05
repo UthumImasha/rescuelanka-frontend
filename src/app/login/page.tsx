@@ -2,26 +2,25 @@
 
 import React, { useState, useEffect } from 'react'; // Import useEffect
 import {
-    Shield,
-    Eye,
-    EyeOff,
-    Mail,
-    Lock,
-    ArrowRight,
-    AlertCircle,
-    Users,
-    Heart,
-    Globe
+    Shield, Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, Users, Heart, Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+
+import { useRouter } from 'next/navigation';
 import { saveToken } from '@/utils/auth';
 import { useLoginUserMutation } from "@/lib/generated/graphql";
 import { useFormik } from 'formik'; // Import useFormik
 import * as Yup from 'yup'; // Import Yup
 
+
 const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [loginError, setLoginError] = useState('');
+    const router = useRouter();
 
     // Destructure `loading` as `isLoading` and `error` as `apolloMutationError`
     const [loginUser, { loading: isLoading, error: apolloMutationError }] = useLoginUserMutation();
@@ -164,7 +163,6 @@ const LoginPage = () => {
                             </p>
                         )}
                     </div>
-
                     {/* Password Field */}
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
@@ -237,7 +235,12 @@ const LoginPage = () => {
                             </p>
                         )}
                     </div>
-
+                    {/* Error Message */}
+                    {loginError && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+                            {loginError}
+                        </div>
+                    )}
                     {/* Remember Me & Forgot Password */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -257,7 +260,6 @@ const LoginPage = () => {
                             Forgot password?
                         </Link>
                     </div>
-
                     {/* Submit Button */}
                     <button
                         type="submit"
@@ -285,7 +287,6 @@ const LoginPage = () => {
                         </div>
                     )}
                 </form>
-
                 {/* Emergency Access */}
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                     <div className="flex items-center">
@@ -301,7 +302,6 @@ const LoginPage = () => {
                         </div>
                     </div>
                 </div>
-
                 {/* Sign Up Link */}
                 <div className="text-center">
                     <p className="text-gray-600">
@@ -311,7 +311,6 @@ const LoginPage = () => {
                         </Link>
                     </p>
                 </div>
-
                 {/* Footer */}
                 <div className="text-center text-xs text-gray-500">
                     <p>By signing in, you agree to our Terms of Service and Privacy Policy</p>

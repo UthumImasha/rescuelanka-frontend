@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useEffect} from 'react'; // Import useEffect
+import React, { useState , useEffect} from 'react'; // Import useEffect
 import {
     AlertCircle,
     Award,
@@ -20,7 +20,7 @@ import {
     Users
 } from 'lucide-react';
 import Image from 'next/image';
-import {useRegisterUserMutation, UserRoleType} from "@/lib/generated/graphql";
+import { useRegisterUserMutation, UserRoleType } from "@/lib/generated/graphql";
 import {useFormik} from 'formik';
 import * as Yup from 'yup';
 
