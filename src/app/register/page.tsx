@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
     AlertCircle,
     Award,
@@ -20,7 +20,7 @@ import {
     Users
 } from 'lucide-react';
 import Image from 'next/image';
-import {useRegisterUserMutation, UserRoleType} from "@/lib/generated/graphql";
+import { useRegisterUserMutation, UserRoleType } from "@/lib/generated/graphql";
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
@@ -112,8 +112,6 @@ const RegisterPage = () => {
             async (position) => {
                 try {
                     const { latitude, longitude } = position.coords;
-                    // In a real app, you would use Google Maps Geocoding API here
-                    // For demo purposes, we'll simulate the response
                     const mockLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
                     const mockAddress = "Detected Location (Mock Address)";
 
@@ -123,7 +121,6 @@ const RegisterPage = () => {
                         address: mockAddress
                     }));
 
-                    // Clear any previous location errors
                     if (errors.location) {
                         setErrors(prev => ({ ...prev, location: '' }));
                     }
@@ -158,12 +155,10 @@ const RegisterPage = () => {
             [name]: type === 'checkbox' ? checked : value
         }));
 
-        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        // Clear skills when role changes to one that doesn't need skills
         if (name === 'role' && !['volunteer', 'first-responder'].includes(value)) {
             setFormData(prev => ({ ...prev, skills: '' }));
         }
@@ -218,32 +213,68 @@ const RegisterPage = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async () => {
+    // Helper to map string role to UserRoleType enum
+    const getUserRoleType = (role) => {
+        switch (role) {
+            case 'affected-individual':
+                return UserRoleType.AffectedIndividual;
+            case 'volunteer':
+                return UserRoleType.Volunteer;
+            case 'first-responder':
+                return UserRoleType.FirstResponder;
+            case 'government':
+                return UserRoleType.Government;
+            default:
+                return undefined;
+        }
+    };
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         if (!validateForm()) return;
 
         setIsLoading(true);
         setSuccess(false);
 
         try {
+            let latitude = null, longitude = null;
+            if (formData.location) {
+                const locParts = formData.location.split(',').map(s => parseFloat(s.trim()));
+                if (locParts.length === 2 && !isNaN(locParts[0]) && !isNaN(locParts[1])) {
+                    latitude = locParts[0];
+                    longitude = locParts[1];
+                }
+            }
+
             await registerUser({
                 variables: {
                     userData: {
-                        name: "Varuna Gunarathna",
-                        role: UserRoleType.Admin,
-                        email: "varuna@gmail.com",
-                        phone: "0714709466",
-                        residentLatitude: 5.566,
-                        residentLongitude: 1.1569,
-                        residentAddress: "528/H, Valihidha Rd, Kaduwela",
+                        name: formData.fullName,
+                        role: getUserRoleType(formData.role),
+                        email: formData.email,
+                        phone: formData.phone,
+                        residentLatitude: latitude,
+                        residentLongitude: longitude,
+                        residentAddress: formData.address,
                         isActive: true,
-                        skills: ["rowing", "swimming", "hiking"],
-                        password: "krag2003",
+                        skills: formData.skills ? [formData.skills] : [],
+                        password: formData.password,
                     }
                 }
             });
+
             setSuccess(true);
-            console.log('Registration data:', formData);
+            setFormData({
+                fullName: '',
+                phone: '',
+                location: '',
+                address: '',
+                role: '',
+                email: '',
+                skills: '',
+                password: '',
+                agreeToTerms: false
+            });
         } catch (error) {
             setErrors({ submit: 'Registration failed. Please try again.' });
         } finally {
@@ -263,8 +294,7 @@ const RegisterPage = () => {
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">Join the Response Team</h2>
                     <p className="text-gray-600">Create your account to start helping your community</p>
                 </div>
-
-                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
+                <form className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6" onSubmit={handleSubmit}>
                     {/* Full Name */}
                     <div>
                         <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -582,8 +612,7 @@ const RegisterPage = () => {
                     {/* Submit Button */}
                     <div className="pt-4">
                         <button
-                            type="button"
-                            onClick={handleSubmit}
+                            type="submit"
                             disabled={isLoading}
                             className="w-full py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
@@ -615,7 +644,7 @@ const RegisterPage = () => {
                             Registration successful! Welcome to Rescue Lanka.
                         </div>
                     )}
-                </div>
+                </form>
 
                 {/* Emergency Access */}
                 <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
