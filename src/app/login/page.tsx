@@ -62,7 +62,7 @@ const LoginPage = () => {
                     }
                 });
 
-                const token = data?.login?.token; // adjust based on your actual login response
+                const token = data?.loginUser?.accessToken; // adjust based on your actual login response
                 if (token) {
                     saveToken(token);
                     console.log('Login successful');
